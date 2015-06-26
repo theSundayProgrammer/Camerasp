@@ -7,11 +7,10 @@ BUILD_DIR=./build
 CXX=g++-4.9
 SUBDIRS = http
 
-.PHONY: subdirs $(SUBDIRS)
+all : http server
+.PHONY : all
 
-subdirs: $(SUBDIRS)
-
-$(SUBDIRS):
+http:
 	$(MAKE) -C $@
 
 srcs = $(wildcard *.cpp)

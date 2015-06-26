@@ -16,7 +16,7 @@ https://solarianprogrammer.com/2015/01/13/raspberry-pi-raspbian-install-gcc-comp
 Use cmake to build Raspicam.
 Use the source code n src  to
  
-make -f pi.mk server
+make -f pi.mk 
 
 This make file may need to be modified for local conditions such as include folder.   
  
