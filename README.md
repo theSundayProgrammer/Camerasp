@@ -1,0 +1,18 @@
+## Camera Server
+
+This project uses 
+* asio  https://github.com/chriskohlhoff/asio
+* Raspicam from https://github.com/cedricve/raspicam and
+* via-httplib ftom https://github.com/kenba/via-httplib (use the asio_only branch)
+
+to convert a Raspberry Pi to a web server that returns images captured from the camera.
+
+'asio' is a header only library. Hence move the contents of the include folder to your default include path.
+
+Install g++-4.9 as described in \
+https://solarianprogrammer.com/2015/01/13/raspberry-pi-raspbian-install-gcc-compile-cpp-14-programs/
+
+Use cmake to build Raspicam.
+Use cmake to build via-httplib.
+Use the source code her to make pi.mk. This make file may need to be modified for local conditions such as include folder.   
+ 
