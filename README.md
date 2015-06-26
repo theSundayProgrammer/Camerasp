@@ -3,7 +3,7 @@
 This project uses 
 * asio  https://github.com/chriskohlhoff/asio
 * Raspicam from https://github.com/cedricve/raspicam and
-* via-httplib ftom https://github.com/kenba/via-httplib (use the asio_only branch)
+* via-httplib forked from https://github.com/kenba/via-httplib 
 
 to convert a Raspberry Pi to a web server that returns images captured from the camera.
 

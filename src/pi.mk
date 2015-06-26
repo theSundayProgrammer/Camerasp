@@ -12,7 +12,7 @@ objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
 server: $(objs)
-	$(CXX)  $(LIBS) -o $@ $^ -pthread  -ljpeg -lvia-httplib -lraspicam
+	$(CXX)  $(LIBS) -o $@ $^ -pthread  -ljpeg -lvia-http -lraspicam
 
 $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXX_FLAGS) $(INCLUDES) $(OPTIONS) -MMD -MP -c $< -o $@
