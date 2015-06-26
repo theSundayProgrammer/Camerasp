@@ -2,7 +2,6 @@
 #include <vector>
 #include <algorithm>
 #include <raspicam/raspicam.h>
-#include <boost/algorithm/string.hpp>
 
 //parse command line
 //returns the value of a command line param. If not found, defvalue is returned
@@ -14,7 +13,6 @@ bool getParamVal ( std::string param,std::vector<std::string> const & args, bool
     else
     {
         std::string str(*++it);
-        boost::algorithm::trim(str);
         return str== string("true");
     }
 }

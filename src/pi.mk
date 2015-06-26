@@ -1,7 +1,5 @@
 
-BOOST_ROOT=/home/pi/boostlib
-INCLUDES = -I $(BOOST_ROOT)/include
-LIBS = -L $(BOOST_ROOT)/lib
+INCLUDES = -I ../include
 CXX_FLAGS = -std=c++11  -pthread -DASIO_STANDALONE
 BUILD_DIR=./build
 CXX=g++-4.9
@@ -18,7 +16,7 @@ objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
 server: $(objs)
-	$(CXX)  $(LIBS) -o $@ $^ -pthread  -ljpeg http/libvia-http.a -lraspicam
+	$(CXX)   -o $@ $^ -pthread  -ljpeg http/libvia-http.a -lraspicam
 
 $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXX_FLAGS) $(INCLUDES) $(OPTIONS) -MMD -MP -c $< -o $@
