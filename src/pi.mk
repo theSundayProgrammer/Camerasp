@@ -5,14 +5,21 @@ LIBS = -L $(BOOST_ROOT)/lib
 CXX_FLAGS = -std=c++11  -pthread -DASIO_STANDALONE
 BUILD_DIR=./build
 CXX=g++-4.9
+SUBDIRS = http
 
+.PHONY: subdirs $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 srcs = $(wildcard *.cpp)
 objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
 server: $(objs)
-	$(CXX)  $(LIBS) -o $@ $^ -pthread  -ljpeg -lvia-http -lraspicam
+	$(CXX)  $(LIBS) -o $@ $^ -pthread  -ljpeg http/libvia-http.a -lraspicam
 
 $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXX_FLAGS) $(INCLUDES) $(OPTIONS) -MMD -MP -c $< -o $@
