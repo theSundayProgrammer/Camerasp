@@ -1,7 +1,7 @@
 ## Camera Server
 
 This project uses 
-* asio  https://github.com/chriskohlhoff/asio
+* asio  https://github.com/chriskohlhoff/asio (included)
 * Raspicam from https://github.com/cedricve/raspicam and
 * via-httplib forked from https://github.com/kenba/via-httplib 
 
@@ -13,10 +13,9 @@ Install g++-4.9 as described in
 
 https://solarianprogrammer.com/2015/01/13/raspberry-pi-raspbian-install-gcc-compile-cpp-14-programs/
 
-Use cmake to build Raspicam.
-Use the source code n src  to
+clone the raspicam repository and use cmake to build Raspicam.
+Use the source code in src  to
  
 make -f pi.mk 
 
-This make file may need to be modified for local conditions such as include folder.   
  
