@@ -15,17 +15,42 @@
 #include <jpeg/jpgrdwr.h>
 #include <cctype>
 #include <asio/buffer.hpp>
-#include <boost/algorithm/string.hpp>
+
 /// Define an HTTP server using std::string to store message bodies
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
 typedef http_server_type::http_connection_type http_connection;
 
 namespace
 {
+  template < class ContainerT >
+void tokenize( ContainerT& tokens,
+               const std::string& str,
+               const std::string& delimiters)
+{
+    std::string::size_type lastPos = 0;
+
+    using value_type = typename ContainerT::value_type;
+    using size_type = typename ContainerT::size_type;
+    std::string::size_type pos = str.find_first_of(delimiters, lastPos);
+    while (pos != std::string::npos) {
+
+        if (pos != lastPos )
+            tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
+
+        lastPos = pos + 1;
+        pos = str.find_first_of(delimiters, lastPos);
+    }
+
+    pos = str.length();
+
+    if (pos != lastPos )
+        tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
+}  
+    
 std::vector<std::string> splitUrl(std::string const& url)
 {
     std::vector<std::string> strs;
-    boost::split(strs, url, boost::is_any_of("\t .+?:= "));
+    tokenize(strs, url, "\t .+?:= ");
     return strs;
 }
 /**
@@ -37,15 +62,7 @@ std::vector<std::string> splitUrl(std::string const& url)
 std::pair<bool, std::vector<unsigned char> > getContent(raspicam::RaspiCam& camera, std::string const& uri)
 {
 
-/*    std::vector<std::string> options(splitUrl(uri));
-    if (options.size() > 0) {
-        std::cout << "Command=" << options[0] << std::endl;
-        std::transform(options[0].begin(), options[0].end(), options[0].begin(), tolower);
-        if (options[0] == "/favicon") {
-            std::cout << "Command=" << options[0] << std::endl;
-            return std::make_pair(false, std::vector<unsigned char>());
-        }
-    }*/
+
     
 
     camera.grab();
