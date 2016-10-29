@@ -2,7 +2,7 @@
 INCLUDES = -I ../include
 CXX_FLAGS = -std=c++11  -pthread -DASIO_STANDALONE
 BUILD_DIR=./build
-CXX=g++-4.9
+CXX=g++-6
 SUBDIRS = http
 
 all : http server
