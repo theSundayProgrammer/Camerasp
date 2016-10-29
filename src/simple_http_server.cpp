@@ -10,7 +10,7 @@
 #include <via/http_server.hpp>
 #include <iostream>
 #include <raspicam/raspicam.h>
-#include <raspicam/parseCmd.h>
+#include <raspicam/parseCmd.hpp>
 #include <algorithm>
 #include <jpeg/jpgrdwr.h>
 #include <cctype>
@@ -143,7 +143,7 @@ int main(int /* argc */, char* argv[])
         const char* options="H=480+W=640";
         std::vector<std::string> opts=splitUrl(options);
         processCommandLine(opts, camera);
-       if (!camera.open()) {
+        if (!camera.open()) {
             std::cerr << "Error opening camera" << std::endl;
             return -1;
         } // The asio io_service.
