@@ -15,6 +15,7 @@
 #include <jpeg/jpgrdwr.h>
 #include <cctype>
 #include <asio/buffer.hpp>
+#include <signal.h>     /* signal, raise, sig_atomic_t */
 
 /// Define an HTTP server using std::string to store message bodies
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
@@ -131,12 +132,21 @@ private:
 };
 }
 
+asio::io_service* pService=nullptr;
+
+void my_handler (int param)
+{
+  if(pService)
+	  pService->stop();
+}
+
 int main(int /* argc */, char* argv[])
 {
     std::string app_name(argv[0]);
     unsigned short port_number(8088);
     std::cout << app_name << ": " << port_number << std::endl;
     raspicam::RaspiCam camera;
+	void (*prev_handler)(int) = signal (SIGTERM, my_handler);
     try
     {
         std::cout << "Connecting to camera" << std::endl;
