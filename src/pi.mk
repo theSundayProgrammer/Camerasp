@@ -1,11 +1,11 @@
 
 INCLUDES = -I ../include
-CXX_FLAGS = -std=c++11  -pthread -DASIO_STANDALONE
+CXX_FLAGS = -pthread -DASIO_STANDALONE
 BUILD_DIR=./build
 CXX=g++-6
 SUBDIRS = http
 
-all : http server
+all : http camerasp
 .PHONY : all
 
 http:
@@ -15,7 +15,7 @@ srcs = $(wildcard *.cpp)
 objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
-server: $(objs)
+camerasp: $(objs)
 	$(CXX)   -o $@ $^ -pthread  -ljpeg http/libvia-http.a -lraspicam
 
 $(BUILD_DIR)/%.o: %.cpp
@@ -25,6 +25,6 @@ $(BUILD_DIR)/%.o: %.cpp
 
 # $(RM) is rm -f by default
 clean:
-	$(RM) $(objs) $(deps) server
+	$(RM) $(objs) $(deps) camerasp
 
 -include $(deps)

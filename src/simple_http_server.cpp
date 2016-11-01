@@ -158,6 +158,7 @@ int main(int /* argc */, char* argv[])
             return -1;
         } // The asio io_service.
         asio::io_service io_service;
+        pService = &io_service;
 
         // Create the HTTP server, attach the request handler
         http_server_type http_server(io_service);
