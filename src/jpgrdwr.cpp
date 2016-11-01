@@ -1,17 +1,12 @@
-/*
- * example.c
- *
- * This file illustrates how to use the IJG code as a subroutine library
- * to read or write JPEG image files.  You should look at this code in
- * conjunction with the documentation file libjpeg.txt.
- *
- * This code will not do anything useful as-is, but it may be helpful as a
- * skeleton for constructing routines that call the JPEG library.  
- *
- * We present these routines in the same coding style used in the JPEG code
- * (ANSI function definitions, etc); but you are of course free to code your
- * routines in a different style if you prefer.
- */
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) Joseph Mariadassou
+// theSundayProgrammer@gmail.com
+// adapted from IJG sample code
+// Distributed under the Boost Software License, Version 1.0.
+// 
+// http://www.boost.org/LICENSE_1_0.txt)
+//////////////////////////////////////////////////////////////////////////////
+
 
 #include <stdio.h>
 
@@ -28,10 +23,10 @@
 /*
  * <setjmp.h> is used for the optional error recovery mechanism shown in
  * the second part of the example.
- */
+ 
 
 #include <setjmp.h>
-
+*/
 
 
 
