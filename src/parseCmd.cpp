@@ -1,7 +1,15 @@
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) Joseph Mariadassou
+// theSundayProgrammer@gmail.com
+// adapted from Raspicam sample code
+// Distributed under the Boost Software License, Version 1.0.
+// 
+// http://www.boost.org/LICENSE_1_0.txt)
+//////////////////////////////////////////////////////////////////////////////
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <raspicam/raspicam.h>
+#include <camerasp/parseCmd.hpp>
 
 //parse command line
 //returns the value of a command line param. If not found, defvalue is returned

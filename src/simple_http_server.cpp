@@ -1,18 +1,23 @@
 //////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2013-2015 Ken Barker
-// (ken dot barker at via-technology dot co dot uk)
-//
+// Copyright (c) Joseph Mariadassou
+// theSundayProgrammer@gmail.com
+// adapted from Kenneth Baker's via-http
 // Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at
+// 
 // http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////
 #include <via/comms/tcp_adaptor.hpp>
 #include <via/http_server.hpp>
 #include <iostream>
-#include <raspicam/raspicam.h>
-#include <raspicam/parseCmd.hpp>
-#include <algorithm>
+#ifdef RASPICAM_MOCK
+#include <camerasp/raspicamMock.hpp>
+#include <stdio.h>
+#else
+  #include <raspicam/raspicam.h>
+#endif
 #include <jpeg/jpgrdwr.h>
+#include <camerasp/parseCmd.hpp>
+#include <algorithm>
 #include <cctype>
 #include <asio/buffer.hpp>
 #include <signal.h>     /* signal, raise, sig_atomic_t */
@@ -62,10 +67,6 @@ std::vector<std::string> splitUrl(std::string const& url)
  */
 std::pair<bool, std::vector<unsigned char> > getContent(raspicam::RaspiCam& camera, std::string const& uri)
 {
-
-
-    
-
     camera.grab();
     int siz = camera.getImageBufferSize();
     Camerasp::ImgInfo info;
@@ -183,3 +184,27 @@ int main(int /* argc */, char* argv[])
 
     return 0;
 }
+#ifdef RASPICAM_MOCK
+#include <camerasp/raspicamMock.hpp>
+#include <stdio.h>
+
+namespace Camerasp
+{
+  std::vector<unsigned char> write_JPEG_dat(struct Camerasp::ImgInfo const &dat)
+  {
+    std::vector<unsigned char> buffer; 
+    FILE *fp = nullptr;
+    fopen_s(&fp, "C:\\Users\\Public\\Pictures\\figure_3.jpg", "rb");
+    if (fp)
+    {
+      for (int c = getc(fp); c != EOF; c = getc(fp))
+      {
+        buffer.push_back(c);
+      }
+      fclose(fp);
+    }
+    return buffer;
+
+  }
+}
+#endif

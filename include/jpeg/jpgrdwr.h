@@ -1,6 +1,11 @@
 #ifndef JPGRDWR_020615
 #define JPGRDWR_020615
+#ifndef RASPICAM_MOCK
 #include <jpeglib.h>
+#else
+typedef unsigned char JSAMPLE;
+typedef JSAMPLE* JSAMPROW;
+#endif
 #include <string>
 #include <vector>
 namespace Camerasp
