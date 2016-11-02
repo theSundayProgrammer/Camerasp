@@ -43,7 +43,7 @@ findParam(std::string const& param,std::vector<std::string> const & args)
    using namespace std;
    return std::find(begin(args),end(args),param);
 }
-raspicam::RASPICAM_EXPOSURE getExposureFromString ( std::string str ) {
+raspicam::RASPICAM_EXPOSURE getExposureFromString (const  std::string& str ) {
     if ( str=="OFF" ) return raspicam::RASPICAM_EXPOSURE_OFF;
     if ( str=="AUTO" ) return raspicam::RASPICAM_EXPOSURE_AUTO;
     if ( str=="NIGHT" ) return raspicam::RASPICAM_EXPOSURE_NIGHT;
@@ -60,7 +60,7 @@ raspicam::RASPICAM_EXPOSURE getExposureFromString ( std::string str ) {
     return raspicam::RASPICAM_EXPOSURE_AUTO;
 }
 
-raspicam::RASPICAM_AWB getAwbFromString ( std::string str ) {
+raspicam::RASPICAM_AWB getAwbFromString ( const std::string& str ) {
 if ( str=="OFF" ) return raspicam::RASPICAM_AWB_OFF;
 if ( str=="AUTO" ) return raspicam::RASPICAM_AWB_AUTO;
 if ( str=="SUNLIGHT" ) return raspicam::RASPICAM_AWB_SUNLIGHT;
@@ -73,7 +73,7 @@ if ( str=="FLASH" ) return raspicam::RASPICAM_AWB_FLASH;
 if ( str=="HORIZON" ) return raspicam::RASPICAM_AWB_HORIZON;
 return raspicam::RASPICAM_AWB_AUTO;
 }
-raspicam::RASPICAM_FORMAT getFormatFromString ( std::string str ) {
+raspicam::RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
     if(str=="GREY") return raspicam::RASPICAM_FORMAT_GRAY;
     if(str=="YUV") return raspicam::RASPICAM_FORMAT_YUV420;
     return raspicam::RASPICAM_FORMAT_RGB;

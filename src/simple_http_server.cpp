@@ -107,23 +107,45 @@ public:
         std::cout << "Rx body: " << body << std::endl;
 
         http_connection::shared_pointer connection(weak_ptr.lock());
-        if (connection) {
-            // output the request
-            via::http::tx_response response(via::http::response_status::code::OK);
-            response.add_server_header();
-            response.add_date_header();
+ 
+        if (connection) 
+        {
+          if(request.method() == "GET")
+          {
             auto resp = getContent(camera_, request.uri());
             if (resp.first) {
-                response.add_header("Content-Type", "image/jpeg");
+              // output the request
+              via::http::tx_response response(via::http::response_status::code::OK);
+              response.add_server_header();
+              response.add_date_header();
+              response.add_header("Content-Type", "image/jpeg");
                 response.add_content_length_header(resp.second.size());
                 std::string response_body((char*)(&resp.second[0]), resp.second.size());
                 connection->send(std::move(response), std::move(response_body));
             } else {
                 // respond with the client's address
-                via::http::tx_response resp(via::http::response_status::code::NOT_FOUND);
-                connection->send(resp, "Favicon not implemented");
+              via::http::tx_response response(via::http::response_status::code::OK);
+              response.add_server_header();
+              response.add_date_header();
+              via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
+              connection->send(response, "Favicon not implemented");
+            } 
+          }
+          else if (request.method() == "PUT")
+          {
+            std::string uri=request.uri();
+            auto paramLoc=uri.find('?');
+            if (paramLoc != std::string::npos)
+            {
+              std::string paramValues(std::begin(uri) + paramLoc + 1, std::end(uri));
+              std::vector<std::string> opts;
+              tokenize(opts, paramValues, "&=");
+              processCommandLine(opts, camera_);
+              camera_.stopCapture();
+              camera_.commitParameters();
+              camera_.startCapture();
             }
-
+          }
         } else
             std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
     }

@@ -161,6 +161,7 @@
     <ClCompile Include="..\http\response_status.cpp" />
     <ClCompile Include="..\parseCmd.cpp" />
     <ClCompile Include="..\simple_http_server.cpp" />
+    <ClCompile Include="raspicamMock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
