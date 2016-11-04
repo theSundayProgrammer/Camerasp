@@ -5,4 +5,5 @@
 #else
 #include <raspicam/raspicam.h>
 #endif
-void processCommandLine ( std::vector<std::string> const & args,raspicam::RaspiCam &Camera );
+#include <map>
+void processCommandLine (std::map<std::string, std::string> const & args,raspicam::RaspiCam &Camera );

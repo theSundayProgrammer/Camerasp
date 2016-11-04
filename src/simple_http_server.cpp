@@ -21,72 +21,64 @@
 #include <cctype>
 #include <asio/buffer.hpp>
 #include <signal.h>     /* signal, raise, sig_atomic_t */
-
+#include <fstream>
+#include <streambuf>
 /// Define an HTTP server using std::string to store message bodies
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
 typedef http_server_type::http_connection_type http_connection;
 
 namespace
 {
-  template < class ContainerT >
-void tokenize( ContainerT& tokens,
-               const std::string& str,
-               const std::string& delimiters)
-{
-    std::string::size_type lastPos = 0;
-
-    using value_type = typename ContainerT::value_type;
-    using size_type = typename ContainerT::size_type;
-    std::string::size_type pos = str.find_first_of(delimiters, lastPos);
-    while (pos != std::string::npos) {
-
-        if (pos != lastPos )
-            tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
-
-        lastPos = pos + 1;
-        pos = str.find_first_of(delimiters, lastPos);
+  std::string lowerCase(std::string const& str)
+  {
+    std::string retval(str);
+    std::transform(std::begin(str), std::end(str), std::begin(retval),tolower);
+    return retval;
+  }
+  std::map<std::string, std::string>
+    tokenize(std::string const& query)
+  {
+    using namespace std;
+    map<string, string> result;
+    size_t offset = 0;
+    size_t pos = query.find('=', offset);
+    while (pos != string::npos)
+    {
+      string name = query.substr(offset, pos - offset);
+      offset = pos + 1;
+      pos = query.find('&', offset);
+      if (pos != string::npos && pos > offset)
+      {
+        string val = query.substr(offset, pos - offset);
+        result.insert(make_pair(lowerCase(name), val));
+        offset = pos + 1;
+      }
+      else {
+        string val = query.substr(offset);
+        if (!val.empty())
+          result.insert(make_pair(lowerCase(name), val));
+        break;
+      }
+      pos = query.find('=', offset);
     }
-
-    pos = str.length();
-
-    if (pos != lastPos )
-        tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
-}  
-    
-std::vector<std::string> splitUrl(std::string const& url)
+    return result;
+  }
+std::string filterCommand(std::string const& uri)
 {
-    std::vector<std::string> strs;
-    tokenize(strs, url, "\t .+?:= ");
-    return strs;
+  size_t pos = uri.find('/');
+  size_t start = (pos == std::string::npos) ? 0 :pos+1;
+  pos = uri.find_first_of("/?", start);
+  auto fin = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
+  return std::string(uri.begin() + start, fin);
 }
+
 /**
  * @brief get image from camera andreturn as jpeg
  * @param camera
  * @param uri
  * @return true, data if all went else false,emtpty buffer
  */
-std::pair<bool, std::vector<unsigned char> > getContent(raspicam::RaspiCam& camera, std::string const& uri)
-{
-    camera.grab();
-    int siz = camera.getImageBufferSize();
-    Camerasp::ImgInfo info;
-    info.buffer.resize(siz);
-    camera.retrieve((unsigned char*)(&info.buffer[0]));
-    info.image_height = camera.getHeight();
-    std::cout << "H W " << camera.getHeight() << " " << camera.getWidth() << std::endl;
-    info.image_width = camera.getWidth();
-    info.quality = 100;
-    info.row_stride = info.image_width * 3;
-    std::vector<unsigned char> buffer;
-    if (info.image_height > 0 && info.image_width > 0) {
-        info.quality = 100;
-        std::cout << "Image Size = " << info.buffer.size() << std::endl;
-        buffer = write_JPEG_dat(info);
-        std::cout << "Data Size = " << buffer.size() << std::endl;
-        return std::make_pair(true, buffer);
-    } else
-        return std::make_pair(false, std::vector<unsigned char>());
-}
+
 
 /// The handler for HTTP requests.
 /// Outputs the request.
@@ -101,58 +93,108 @@ public:
     void
     operator()(http_connection::weak_pointer weak_ptr, via::http::rx_request const& request, std::string const& body)
     {
-        std::cout << "\n\nRx request: " << request.uri() << std::endl;
+      std::cout << "\n\nRx request: " << request.uri() << std::endl;
 
-        std::cout << request.headers().to_string() << std::endl;
-        std::cout << "Rx body: " << body << std::endl;
+      std::cout << request.headers().to_string() << std::endl;
+      std::cout << "Rx body: " << body << std::endl;
 
-        http_connection::shared_pointer connection(weak_ptr.lock());
- 
-        if (connection) 
-        {
-          if(request.method() == "GET")
+      http_connection::shared_pointer connection(weak_ptr.lock());
+
+      if (connection)
+      {
+           std::string filtered = filterCommand(request.uri());
+          std::cout << filtered << std::endl;
+          if (filtered == "img.jpg")
           {
-            auto resp = getContent(camera_, request.uri());
-            if (resp.first) {
-              // output the request
-              via::http::tx_response response(via::http::response_status::code::OK);
-              response.add_server_header();
-              response.add_date_header();
-              response.add_header("Content-Type", "image/jpeg");
-                response.add_content_length_header(resp.second.size());
-                std::string response_body((char*)(&resp.second[0]), resp.second.size());
-                connection->send(std::move(response), std::move(response_body));
-            } else {
-                // respond with the client's address
-              via::http::tx_response response(via::http::response_status::code::OK);
-              response.add_server_header();
-              response.add_date_header();
-              via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-              connection->send(response, "Favicon not implemented");
-            } 
+            auto resp = getGETResponse(request.uri());
+            connection->send(std::move(resp.first), std::move(resp.second));
           }
-          else if (request.method() == "PUT")
-          {
-            std::string uri=request.uri();
-            auto paramLoc=uri.find('?');
-            if (paramLoc != std::string::npos)
+          else if (filtered == "SetParam") {
+
+            std::string uri = request.uri();
+            size_t pos = uri.find('?');
+            size_t start = (pos == std::string::npos) ? 0 : pos + 1;
+            uri = uri.substr(start);
+            std::cout << "Query:" << uri << std::endl;
+            auto opts=tokenize(uri);
+            processCommandLine(opts, camera_);
+            camera_.stopCapture();
+            camera_.commitParameters();
+            camera_.startCapture();
+            via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
+            connection->send(response, "Camera Updated");
+            std::cout << "Camera Updated" << std::endl;
+          }
+          else {
+            std::ifstream t("index.html");
+            if (t)
             {
-              std::string paramValues(std::begin(uri) + paramLoc + 1, std::end(uri));
-              std::vector<std::string> opts;
-              tokenize(opts, paramValues, "&=");
-              processCommandLine(opts, camera_);
-              camera_.stopCapture();
-              camera_.commitParameters();
-              camera_.startCapture();
+              std::string str((std::istreambuf_iterator<char>(t)),
+                std::istreambuf_iterator<char>());
+              via::http::tx_response response(via::http::response_status::code::OK);
+              response.add_server_header();
+              response.add_date_header();
+              response.add_header("Content-Type", "text/html");
+              response.add_header("charset", "utf-8");
+              response.add_content_length_header(str.size());
+              connection->send(response, str);
+              //std::cout << str << std::endl;
+            }
+            else {
+              via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
+              connection->send(response, "Index Not Found");
+              std::cout << "index not found" << std::endl;
             }
           }
-        } else
-            std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
-    }
+        } else {
+          std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
+        }
+      }
 
-private:
-    raspicam::RaspiCam& camera_;
-};
+    private:
+      std::pair<bool, std::vector<unsigned char> > getContent(std::string const& uri)
+      {
+        camera_.grab();
+        int siz = camera_.getImageBufferSize();
+        Camerasp::ImgInfo info;
+        info.buffer.resize(siz);
+        camera_.retrieve((unsigned char*)(&info.buffer[0]));
+        info.image_height = camera_.getHeight();
+        std::cout << "H W " << camera_.getHeight() << " " << camera_.getWidth() << std::endl;
+        info.image_width = camera_.getWidth();
+        info.quality = 100;
+        info.row_stride = info.image_width * 3;
+        std::vector<unsigned char> buffer;
+        if (info.image_height > 0 && info.image_width > 0) {
+          info.quality = 100;
+          std::cout << "Image Size = " << info.buffer.size() << std::endl;
+          buffer = write_JPEG_dat(info);
+          std::cout << "Data Size = " << buffer.size() << std::endl;
+          return std::make_pair(true, buffer);
+        }
+        else
+          return std::make_pair(false, std::vector<unsigned char>());
+      }
+      std::pair<via::http::tx_response, std::string> getGETResponse(std::string const& uri)
+      {
+        auto resp = getContent(uri);
+        if (resp.first) {
+          // output the request
+          via::http::tx_response response(via::http::response_status::code::OK);
+          response.add_server_header();
+          response.add_date_header();
+          response.add_header("Content-Type", "image/jpeg");
+          response.add_content_length_header(resp.second.size());
+          std::string response_body((char*)(&resp.second[0]), resp.second.size());
+          return std::make_pair(response, response_body);
+        }
+        else {
+          via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
+          return std::make_pair(response, "Favicon Not Found");
+        }
+      }
+      raspicam::RaspiCam& camera_;
+    };
 }
 
 asio::io_service* pService=nullptr;
@@ -173,9 +215,9 @@ int main(int /* argc */, char* argv[])
     try
     {
         std::cout << "Connecting to camera" << std::endl;
-        const char* options="H=480+W=640";
-        std::vector<std::string> opts=splitUrl(options);
-        processCommandLine(opts, camera);
+        const char* options="Height=480&Width=640";
+        
+        processCommandLine(tokenize(options), camera);
         if (!camera.open()) {
             std::cerr << "Error opening camera" << std::endl;
             return -1;
@@ -197,6 +239,7 @@ int main(int /* argc */, char* argv[])
 
         // Start the server
         io_service.run();
+        std::cout << "Tamam Shud" << std::endl;
     }
     catch (std::exception& e)
     {
