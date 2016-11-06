@@ -28,37 +28,35 @@ typedef http_server_type::http_connection_type http_connection;
 
 namespace
 {
-  template < class ContainerT >
-void tokenize( ContainerT& tokens,
-               const std::string& str,
-               const std::string& delimiters)
-{
-    std::string::size_type lastPos = 0;
-
-    using value_type = typename ContainerT::value_type;
-    using size_type = typename ContainerT::size_type;
-    std::string::size_type pos = str.find_first_of(delimiters, lastPos);
-    while (pos != std::string::npos) {
-
-        if (pos != lastPos )
-            tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
-
-        lastPos = pos + 1;
-        pos = str.find_first_of(delimiters, lastPos);
+  std::map<std::string, std::string>
+    tokenize(std::string const& query)
+  {
+    using namespace std;
+    map<string, string> result;
+    size_t offset = 0;
+    size_t pos = query.find('=', offset);
+    while (pos != string::npos)
+    {
+      string name = query.substr(offset, pos - offset);
+      offset = pos + 1;
+      pos = query.find('&', offset);
+      if (pos != string::npos && pos > offset)
+      {
+        string val = query.substr(offset, pos - offset);
+        result.insert(make_pair(name, val));
+        offset = pos + 1;
+      }
+      else {
+        string val = query.substr(offset);
+        if (!val.empty())
+          result.insert(make_pair(name, val));
+        break;
+      }
+      pos = query.find('=', offset);
     }
+    return result;
+  }
 
-    pos = str.length();
-
-    if (pos != lastPos )
-        tokens.push_back(value_type(str.data() + lastPos, (size_type)pos - lastPos));
-}  
-    
-std::vector<std::string> splitUrl(std::string const& url)
-{
-    std::vector<std::string> strs;
-    tokenize(strs, url, "\t .+?:= ");
-    return strs;
-}
 /**
  * @brief get image from camera andreturn as jpeg
  * @param camera
@@ -141,6 +139,21 @@ void my_handler (int param)
 	  pService->stop();
 }
 
+errno_t getOptions(char const* fileName, std::string& options)
+{
+  FILE *fp = nullptr;
+  errno_t err = fopen_s(&fp, fileName, "r");
+  if (err==0)
+  {
+    for (int c = getc(fp); c != EOF ; c = getc(fp))
+    {
+      if (c != '\n') options.push_back(c);
+    }
+    fclose(fp);
+  }
+  return err;
+}
+
 int main(int /* argc */, char* argv[])
 {
     std::string app_name(argv[0]);
@@ -151,30 +164,38 @@ int main(int /* argc */, char* argv[])
     try
     {
         std::cout << "Connecting to camera" << std::endl;
-        const char* options="H=480+W=640";
-        std::vector<std::string> opts=splitUrl(options);
-        processCommandLine(opts, camera);
-        if (!camera.open()) {
+        //const char* options="Height=480&Width=640";
+        std::string options;
+        errno_t err = getOptions("options.txt", options);
+        if (err == 0) {
+           auto opts = tokenize(options);
+          processCommandLine(opts, camera);
+          if (!camera.open()) {
             std::cerr << "Error opening camera" << std::endl;
             return -1;
-        } // The asio io_service.
-        asio::io_service io_service;
-        pService = &io_service;
+          } // The asio io_service.
+          asio::io_service io_service;
+          pService = &io_service;
 
-        // Create the HTTP server, attach the request handler
-        http_server_type http_server(io_service);
+          // Create the HTTP server, attach the request handler
+          http_server_type http_server(io_service);
 
-        http_server.request_received_event(request_handler(camera));
+          http_server.request_received_event(request_handler(camera));
 
-        // Accept IPV4 connections on port_number
-        std::error_code error(http_server.accept_connections(port_number, true));
-        if (error) {
+          // Accept IPV4 connections on port_number
+          std::error_code error(http_server.accept_connections(port_number, true));
+          if (error) {
             std::cerr << "Error: " << error.message() << std::endl;
             return 1;
+          }
+
+          // Start the server
+          io_service.run();
+        }
+        else {
+          std::cout << "error in opening options file " << std::endl;
         }
 
-        // Start the server
-        io_service.run();
     }
     catch (std::exception& e)
     {
