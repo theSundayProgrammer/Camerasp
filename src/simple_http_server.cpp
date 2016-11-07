@@ -112,7 +112,7 @@ public:
             auto resp = getGETResponse(request.uri());
             connection->send(std::move(resp.first), std::move(resp.second));
           }else {
-            std::ifstream t("index.html");
+            std::ifstream t("/srv/camerasp/index.html");
             if (t)
             {
               std::string str((std::istreambuf_iterator<char>(t)),
@@ -223,7 +223,7 @@ int main(int /* argc */, char* argv[])
     {
         std::cout << "Connecting to camera" << std::endl;
         std::string options;
-        errno_t err = getOptions("options.txt", options);
+        errno_t err = getOptions("/srv/camerasp/options.txt", options);
         if (err == 0) {
            auto opts = tokenize(options);
           processCommandLine(opts, camera);
