@@ -35,6 +35,7 @@ int getParamVal ( std::string param,std::map<std::string,std::string> const& arg
     else
     {
         int n = atoi(it->second.c_str());
+        std::cout << param << ":" << n << std::endl;
         return n;
     }
 }

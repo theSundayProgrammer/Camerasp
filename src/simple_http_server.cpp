@@ -9,11 +9,13 @@
 #include <via/comms/tcp_adaptor.hpp>
 #include <via/http_server.hpp>
 #include <iostream>
+#include <errno.h>
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
 #else
-  #include <raspicam/raspicam.h>
+  #include <raspicam/raspicam_still.h>
+typedef int errno_t;
 #endif
 #include <jpeg/jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
@@ -23,6 +25,7 @@
 #include <signal.h>     /* signal, raise, sig_atomic_t */
 #include <fstream>
 #include <streambuf>
+#include <map>
 /// Define an HTTP server using std::string to store message bodies
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
 typedef http_server_type::http_connection_type http_connection;
@@ -108,24 +111,7 @@ public:
           {
             auto resp = getGETResponse(request.uri());
             connection->send(std::move(resp.first), std::move(resp.second));
-          }
-          else if (filtered == "SetParam") {
-
-            std::string uri = request.uri();
-            size_t pos = uri.find('?');
-            size_t start = (pos == std::string::npos) ? 0 : pos + 1;
-            uri = uri.substr(start);
-            std::cout << "Query:" << uri << std::endl;
-            auto opts=tokenize(uri);
-            processCommandLine(opts, camera_);
-            camera_.stopCapture();
-            camera_.commitParameters();
-            camera_.startCapture();
-            via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-            connection->send(response, "Camera Updated");
-            std::cout << "Camera Updated" << std::endl;
-          }
-          else {
+          }else {
             std::ifstream t("index.html");
             if (t)
             {
@@ -204,7 +190,28 @@ void my_handler (int param)
   if(pService)
 	  pService->stop();
 }
-
+#ifndef RASPICAM_MOCK
+errno_t fopen_s(FILE** fp, const char* name, const char* mode)
+{
+     *fp=fopen(name,mode);
+     if(*fp) return 0;
+     else return -1;
+}
+#endif
+errno_t getOptions(char const* fileName, std::string& options)
+{
+  FILE *fp = nullptr;
+  errno_t err = fopen_s(&fp, fileName, "r");
+  if (err==0)
+  {
+    for (int c = getc(fp); c != EOF ; c = getc(fp))
+    {
+      if (c != '\n') options.push_back(c);
+    }
+    fclose(fp);
+  }
+  return err;
+}
 int main(int /* argc */, char* argv[])
 {
     std::string app_name(argv[0]);
@@ -215,31 +222,37 @@ int main(int /* argc */, char* argv[])
     try
     {
         std::cout << "Connecting to camera" << std::endl;
-        const char* options="Height=480&Width=640";
-        
-        processCommandLine(tokenize(options), camera);
-        if (!camera.open()) {
+        std::string options;
+        errno_t err = getOptions("options.txt", options);
+        if (err == 0) {
+           auto opts = tokenize(options);
+          processCommandLine(opts, camera);
+          if (!camera.open()) {
             std::cerr << "Error opening camera" << std::endl;
             return -1;
-        } // The asio io_service.
-        asio::io_service io_service;
-        pService = &io_service;
+          } // The asio io_service.
+          asio::io_service io_service;
+          pService = &io_service;
 
-        // Create the HTTP server, attach the request handler
-        http_server_type http_server(io_service);
+          // Create the HTTP server, attach the request handler
+          http_server_type http_server(io_service);
 
-        http_server.request_received_event(request_handler(camera));
+          http_server.request_received_event(request_handler(camera));
 
-        // Accept IPV4 connections on port_number
-        std::error_code error(http_server.accept_connections(port_number, true));
-        if (error) {
+          // Accept IPV4 connections on port_number
+          std::error_code error(http_server.accept_connections(port_number, true));
+          if (error) {
             std::cerr << "Error: " << error.message() << std::endl;
             return 1;
+          }
+
+          // Start the server
+          io_service.run();
+        }
+        else {
+          std::cout << "error in opening options file " << std::endl;
         }
 
-        // Start the server
-        io_service.run();
-        std::cout << "Tamam Shud" << std::endl;
     }
     catch (std::exception& e)
     {
