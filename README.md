@@ -14,8 +14,6 @@ Install g++-x, the latest version of g++  as described below and modify the CXX 
 https://solarianprogrammer.com/2015/01/13/raspberry-pi-raspbian-install-gcc-compile-cpp-14-programs/
 
 clone the raspicam repository and use cmake to build Raspicam.
-Use the source code in src  to
- 
-make -f pi.mk 
+To build run 'make' from the parent of 'src' directory.
 
  
