@@ -49,12 +49,9 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "http_connection.hpp"
 #include "via/comms/server.hpp"
+#include "via/http/request_router.hpp"
 #ifdef HTTP_SSL
-  #ifdef ASIO_STANDALONE
-    #include <asio/ssl/context.hpp>
-  #else
-    #include <boost/asio/ssl/context.hpp>
-  #endif
+#include <boost/asio/ssl/context.hpp>
 #endif
 #include <map>
 #include <stdexcept>
@@ -128,13 +125,21 @@ namespace via
     typedef std::function <void (std::weak_ptr<http_connection_type>)>
       ConnectionHandler;
 
+    /// The built-in request_router type.
+    typedef typename http::request_router<Container> request_router_type;
+
+    /// The built-in request_router Handler type.
+    typedef typename request_router_type::Handler request_router_handler_type;
+
   private:
 
     ////////////////////////////////////////////////////////////////////////
     // Variables
 
-    std::shared_ptr<server_type> server_;   ///< the communications server
-    connection_collection http_connections_;  ///< the communications channels
+    std::shared_ptr<server_type> server_;    ///< the communications server
+    connection_collection http_connections_; ///< the communications channels
+    request_router_type   request_router_;   ///< the built-in request_router
+    bool                  shutting_down_;    ///< the server is shutting down
 
     // Request parser parameters
     bool           strict_crlf_;       ///< enforce strict parsing of CRLF
@@ -203,6 +208,26 @@ namespace via
       else
         std::cerr << "http_server, error: duplicate connection for "
                   << iter->second->remote_address() << std::endl;
+    }
+
+    /// Route the request using the request_router_.
+    /// @param weak_ptr a weak pointer to the comms connection.
+    /// @param request the received request.
+    /// @param body the received request body.
+    void route_request(std::weak_ptr<http_connection_type> weak_ptr,
+                       http::rx_request const& request,
+                       Container const& body)
+    {
+      std::shared_ptr<http_connection_type> connection(weak_ptr.lock());
+      if (connection)
+      {
+        Container response_body;
+        http::tx_response response
+            (request_router_.handle_request(request, body, response_body));
+        response.add_date_header();
+        response.add_server_header();
+        connection->send(std::move(response), std::move(response_body));
+      }
     }
 
     /// Receive data packets on an underlying communications connection.
@@ -299,6 +324,10 @@ namespace via
         disconnected_handler_(iter->second);
 
       http_connections_.erase(iter);
+
+      // If the http_server is being shutdown and this was the last connection
+      if (shutting_down_ && http_connections_.empty())
+        server_->close();
     }
 
     /// Receive an event from the underlying comms connection.
@@ -346,7 +375,7 @@ namespace via
     /// Receive an error from the underlying comms connection.
     /// @param error the boost error_code.
     // @param connection a weak ponter to the underlying comms connection.
-    void error_handler(ASIO_ERROR_CODE const& error,
+    void error_handler(const ASIO_ERROR_CODE &error,
                        std::weak_ptr<connection_type>) // connection)
     {
       std::cerr << "error_handler" << std::endl;
@@ -364,10 +393,13 @@ namespace via
     http_server& operator=(http_server) = delete;
 
     /// Constructor.
-    /// @param io_service a reference to the boost::asio::io_service.
+    /// @param io_service a reference to the ASIO::io_service.
+    /// @param auth_ptr a shared pointer to an authentication.
     explicit http_server(ASIO::io_service& io_service) :
       server_(new server_type(io_service)),
       http_connections_(),
+      request_router_(),
+      shutting_down_(false),
 
       // Set request parser parameters to default values
       strict_crlf_        (false),
@@ -405,6 +437,10 @@ namespace via
       server_->set_no_delay(true);
     }
 
+    /// Destructor, close the connections.
+    ~http_server()
+    { close(); }
+
     /// Start accepting connections on the given port and protocol.
     /// @pre http_server::request_received_event must have been called to register
     /// the request received callback function before this function.
@@ -418,18 +454,29 @@ namespace via
                       (unsigned short port = SocketAdaptor::DEFAULT_HTTP_PORT,
                        bool ipv4_only = false)
     {
+      // If a request handler's not been registered, use the request_router
       if (!http_request_handler_)
-        throw std::logic_error
-          ("via::http_server, a request_received_event is not registered");
+        http_request_handler_ =
+            [this](std::weak_ptr<http_connection_type> weak_ptr,
+                   http::rx_request const& request, Container const& body)
+        { route_request(weak_ptr, request, body); };
 
       return server_->accept_connections(port, ipv4_only);
     }
+
+    /// Accessor for the request_router_
+    request_router_type& request_router()
+    { return request_router_; }
 
     ////////////////////////////////////////////////////////////////////////
     // Event Handlers
 
     /// Connect the request received callback function.
-    /// @post the application may call http_server::accept_connections.
+    ///
+    /// If the application registers a handler for this event, then the
+    /// application must determine how to respond to requests.
+    /// Otherwise, the server will handle request with request_router_.
+    /// @post disables the built-in request_router.
     /// @param handler the handler for a received HTTP request.
     void request_received_event(RequestHandler handler) NOEXCEPT
     { http_request_handler_ = handler; }
@@ -636,6 +683,23 @@ namespace via
 
     ////////////////////////////////////////////////////////////////////////
     // other functions
+
+    /// Disconnect all of the outstanding http server connections to prepare
+    /// for closing the server.
+    void shutdown()
+    {
+      if (!shutting_down_ && !http_connections_.empty())
+      {
+        shutting_down_ = true;
+        for (auto& elem : http_connections_)
+          elem.second->disconnect();
+        //for (auto item = http_connections_.begin(); item!= http_connections_.end(); ++item)
+        //  item->second->disconnect();
+        http_connections_.clear();
+      }
+      else
+        close();
+    }
 
     /// Close the http server and all of the connections associated with it.
     void close()

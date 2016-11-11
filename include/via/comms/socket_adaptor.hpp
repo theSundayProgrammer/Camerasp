@@ -16,18 +16,17 @@
 /// @see tcp_adaptor
 /// @see ssl_tcp_adaptor
 //////////////////////////////////////////////////////////////////////////////
-#ifdef ASIO_STANDALONE
-  #include <asio.hpp>
-  #define ASIO asio
-  #define ASIO_ERROR_CODE asio::error_code
-#else
-  #include <boost/asio.hpp>
-  #define ASIO boost::asio
-  #define ASIO_ERROR_CODE boost::system::error_code
-#endif
 #include <deque>
 #include <functional>
-
+#ifdef ASIO_STANDALONE
+#include <asio.hpp>
+#define ASIO asio
+#define ASIO_ERROR_CODE asio::error_code
+#else
+#include <boost/asio.hpp>
+#define ASIO boost::asio
+#define ASIO_ERROR_CODE boost::system::error_code
+#endif
 namespace via
 {
   namespace comms
@@ -59,12 +58,12 @@ namespace via
     /// @param error the (boost) error code.
     /// @param host_iterator the resolver_iterator
     typedef std::function<void (ASIO_ERROR_CODE const&,
-                                ASIO::ip::tcp::resolver::iterator)>
+                                asio::ip::tcp::resolver::iterator)>
       ConnectHandler;
 
     /// @typedef ConstBuffers
     /// A deque of asio::const_buffers.
-    typedef std::deque<ASIO::const_buffer> ConstBuffers;
+    typedef std::deque<asio::const_buffer> ConstBuffers;
   }
 }
 

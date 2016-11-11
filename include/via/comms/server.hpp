@@ -16,11 +16,7 @@
 #include "connection.hpp"
 #include "via/no_except.hpp"
 #ifdef HTTP_SSL
-  #ifdef ASIO_STANDALONE
-    #include <asio/ssl/context.hpp>
-  #else
-    #include <boost/asio/ssl/context.hpp>
-  #endif
+  #include <boost/asio/ssl/context.hpp>
 #endif
 #include <set>
 #include <string>
@@ -157,7 +153,7 @@ namespace via
       /// @param error the boost asio error.
       /// @param connection a weak_pointer to the connection that sent the
       /// error.
-      void error_handler(ASIO_ERROR_CODE const& error,
+      void error_handler(const ASIO_ERROR_CODE& error,
                          std::weak_ptr<connection_type> connection)
       { error_callback_(error, connection); }
 
@@ -246,8 +242,8 @@ namespace via
       /// Set the event_callback function.
       /// For use with the Constructor or create function that doesn't take
       /// an event_callback parameter.
-      /// @see server(boost::asio::io_service& io_service)
-      /// @see create(boost::asio::io_service& io_service)
+      /// @see server(ASIO::io_service& io_service)
+      /// @see create(ASIO::io_service& io_service)
       /// @param event_callback the event callback function.
       void set_event_callback(event_callback_type event_callback) NOEXCEPT
       { event_callback_ = event_callback; }
@@ -256,8 +252,8 @@ namespace via
       /// Set the error_callback function.
       /// For use with the Constructor or create function that doesn't take
       /// an error_callback parameter.
-      /// @see server(boost::asio::io_service& io_service)
-      /// @see create(boost::asio::io_service& io_service)
+      /// @see server(ASIO::io_service& io_service)
+      /// @see create(ASIO::io_service& io_service)
       /// @param error_callback the error callback function.
       void set_error_callback(error_callback_type error_callback) NOEXCEPT
       { error_callback_ = error_callback; }
@@ -297,7 +293,7 @@ namespace via
           if (!ec)
           {
             acceptor_v4_.set_option
-              (ASIO::ip::tcp::acceptor::reuse_address(true));
+                (ASIO::ip::tcp::acceptor::reuse_address(true));
             acceptor_v4_.bind
               (ASIO::ip::tcp::endpoint(ASIO::ip::tcp::v4(), port));
             acceptor_v4_.listen();
@@ -378,7 +374,6 @@ namespace via
         if (acceptor_v4_.is_open())
           acceptor_v4_.close();
 
-        next_connection_.reset();
         connections_.clear();
       }
     };

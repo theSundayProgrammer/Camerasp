@@ -18,11 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "via/comms/socket_adaptor.hpp"
 #include "via/no_except.hpp"
-#ifdef ASIO_STANDALONE
-  #include <asio/ssl.hpp>
-#else
-  #include <boost/asio/ssl.hpp>
-#endif
+#include <boost/asio/ssl.hpp>
 
 // Enable SSL support.
 #ifndef HTTP_SSL
@@ -46,22 +42,23 @@ namespace via
       class ssl_tcp_adaptor
       {
         /// The asio io_service.
-        ASIO::io_service& io_service_;
+        boost::asio::io_service& io_service_;
         /// The asio SSL TCP socket.
-        ASIO::ssl::stream<ASIO::ip::tcp::socket> socket_;
+        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> socket_;
         /// The host iterator used by the resolver.
-        ASIO::ip::tcp::resolver::iterator host_iterator_;
+        boost::asio::ip::tcp::resolver::iterator host_iterator_;
 
         /// @fn resolve_host
         /// Resolves the host name and port.
         /// @param host_name the host name.
         /// @param port_name the host port.
-        ASIO::ip::tcp::resolver::iterator resolve_host
+        boost::asio::ip::tcp::resolver::iterator resolve_host
           (char const* host_name, char const* port_name) const
         {
-          ASIO::ip::tcp::resolver resolver(io_service_);
-          ASIO::ip::tcp::resolver::query query(host_name, port_name);
-          return resolver.resolve(query);
+          boost::system::error_code ignoredEc;
+          boost::asio::ip::tcp::resolver resolver(io_service_);
+          boost::asio::ip::tcp::resolver::query query(host_name, port_name);
+          return resolver.resolve(query, ignoredEc);
         }
 
         /// @fn verify_certificate
@@ -73,7 +70,7 @@ namespace via
         /// Note that the callback is called once for each certificate in the
         /// certificate chain, starting from the root certificate authority.
         static bool verify_certificate(bool preverified,
-                                       ASIO::ssl::verify_context& ctx)
+                                       boost::asio::ssl::verify_context& ctx)
         {
           char subject_name[256];
           X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
@@ -89,8 +86,8 @@ namespace via
         /// @param is_server whether performing client or server handshaking
         void handshake(ErrorHandler handshake_handler, bool is_server)
         {
-          socket_.async_handshake(is_server ? ASIO::ssl::stream_base::server
-                                            : ASIO::ssl::stream_base::client,
+          socket_.async_handshake(is_server ? boost::asio::ssl::stream_base::server
+                                            : boost::asio::ssl::stream_base::client,
                                   handshake_handler);
         }
 
@@ -99,16 +96,16 @@ namespace via
         /// @param connect_handler the connect callback function.
         /// @param host_iterator the resolver iterator.
         void connect_socket(ConnectHandler connect_handler,
-                            ASIO::ip::tcp::resolver::iterator host_iterator)
+                            boost::asio::ip::tcp::resolver::iterator host_iterator)
         {
           // Attempt to connect to the host
-          ASIO::async_connect(socket_.lowest_layer(), host_iterator,
+          boost::asio::async_connect(socket_.lowest_layer(), host_iterator,
                                      connect_handler);
         }
 
         /// The ssl_tcp_adaptor constructor.
         /// @param io_service the asio io_service associted with this connection
-        explicit ssl_tcp_adaptor(ASIO::io_service& io_service) :
+        explicit ssl_tcp_adaptor(boost::asio::io_service& io_service) :
           io_service_(io_service),
           socket_(io_service_, ssl_context()),
           host_iterator_()
@@ -130,10 +127,10 @@ namespace via
         /// A static function to manage the ssl context for the ssl
         /// connections.
         /// @return ssl_context the ssl context.
-        static ASIO::ssl::context& ssl_context()
+        static boost::asio::ssl::context& ssl_context()
         {
-          static ASIO::ssl::context context_
-              (ASIO::ssl::context::tlsv12);
+          static boost::asio::ssl::context context_
+              (boost::asio::ssl::context::tlsv12);
           return context_;
         }
 
@@ -147,13 +144,13 @@ namespace via
         bool connect(const char* host_name, const char* port_name,
                      ConnectHandler connect_handler)
         {
-          ssl_context().set_verify_mode(ASIO::ssl::verify_peer);
+          ssl_context().set_verify_mode(boost::asio::ssl::verify_peer);
           socket_.set_verify_callback([]
-            (bool preverified, ASIO::ssl::verify_context& ctx)
+            (bool preverified, boost::asio::ssl::verify_context& ctx)
               { return verify_certificate(preverified, ctx); });
 
           host_iterator_ = resolve_host(host_name, port_name);
-          if (host_iterator_ == ASIO::ip::tcp::resolver::iterator())
+          if (host_iterator_ == boost::asio::ip::tcp::resolver::iterator())
             return false;
 
           connect_socket(connect_handler, host_iterator_);
@@ -168,7 +165,7 @@ namespace via
         void read(void* ptr, size_t size, CommsHandler read_handler)
         {
           socket_.async_read_some
-              (ASIO::buffer(ptr, size), read_handler);
+              (boost::asio::buffer(ptr, size), read_handler);
         }
 
         /// @fn write
@@ -177,23 +174,25 @@ namespace via
         /// @param write_handler the handler called after a message is sent.
         void write(ConstBuffers& buffers, CommsHandler write_handler)
         {
-          ASIO::async_write(socket_, buffers, write_handler);
+          boost::asio::async_write(socket_, buffers, write_handler);
         }
 
         /// @fn shutdown
         /// The ssl tcp socket shutdown function.
-        /// Disconnects the socket.
-        /// Note: the handlers are required to shutdown SSL gracefully, see:
-        /// http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error/25703699#25703699
-        /// @param shutdown_handler the handler for async_shutdown
-        /// @param close_handler the handler for async_write
-        void shutdown(ErrorHandler shutdown_handler, CommsHandler close_handler)
+        /// Disconnects the socket an notifies the write handler.
+        /// @param write_handler the handler for the call to async_shutdown.
+        void shutdown(CommsHandler write_handler)
         {
-          static const char buffer[] = "";
-          socket_.async_shutdown(shutdown_handler);
-          ASIO::async_write(socket_,
-                                   ASIO::const_buffers_1(&buffer[0], 1),
-                                   close_handler);
+          // Cancel any pending operations
+          boost::system::error_code ignoredEc;
+          socket().cancel(ignoredEc);
+
+          // Call async_shutdown with the write_handler as a shutdown handler.
+          // This sends an async SSL close_notify message, shuts down the
+          // write side of the SSL stream and then waits (asynchronously) for
+          // the SSL close_notify response from the other side.
+          socket_.async_shutdown([write_handler]
+             (boost::system::error_code const& ec){ write_handler(ec, 0); });
         }
 
         /// @fn close
@@ -201,7 +200,7 @@ namespace via
         /// Cancels any send, receive or connect operations and closes the socket.
         void close()
         {
-          ASIO_ERROR_CODE ignoredEc;
+          boost::system::error_code ignoredEc;
           if (socket().is_open())
             socket().close (ignoredEc);
         }
@@ -219,22 +218,23 @@ namespace via
         /// it also determines whether the caller should perfrom an SSL
         /// shutdown.
         /// @param error the error_code
-        /// @retval ssl_shutdown - an ssl_disconnect should be performed
-        /// @return true if a disconnect error, false otherwise.
-        bool is_disconnect(ASIO_ERROR_CODE const& error,
+        /// @retval ssl_shutdown - an SSL shutdown should be performed
+        /// @return true if the socket is disconnected, false otherwise.
+        bool is_disconnect(boost::system::error_code const& error,
                            bool& ssl_shutdown) NOEXCEPT
         {
-          bool ssl_error(ASIO::error::get_ssl_category() == error.category());
+          bool ssl_error(boost::asio::error::get_ssl_category() == error.category());
           ssl_shutdown = ssl_error &&
-                         (SSL_R_SHORT_READ == ERR_GET_REASON(error.value()));
+               (SSL_R_SHORT_READ != ERR_GET_REASON(error.value())) &&
+               (SSL_R_PROTOCOL_IS_SHUTDOWN != ERR_GET_REASON(error.value()));
 
-          return ssl_error;
+          return ssl_error && !ssl_shutdown;
         }
 
         /// @fn socket
         /// Accessor for the underlying tcp socket.
         /// @return a reference to the tcp socket.
-        ASIO::ssl::stream<ASIO::ip::tcp::socket>
+        boost::asio::ssl::stream<boost::asio::ip::tcp::socket>
         ::lowest_layer_type& socket() NOEXCEPT
         { return socket_.lowest_layer(); }
       };

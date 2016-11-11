@@ -149,6 +149,21 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\via\http\character.hpp" />
+    <ClInclude Include="..\..\include\via\http\chunk.hpp" />
+    <ClInclude Include="..\..\include\via\http\headers.hpp" />
+    <ClInclude Include="..\..\include\via\http\header_field.hpp" />
+    <ClInclude Include="..\..\include\via\http\request.hpp" />
+    <ClInclude Include="..\..\include\via\http\request_handler.hpp" />
+    <ClInclude Include="..\..\include\via\http\request_method.hpp" />
+    <ClInclude Include="..\..\include\via\http\request_router.hpp" />
+    <ClInclude Include="..\..\include\via\http\request_uri.hpp" />
+    <ClInclude Include="..\..\include\via\http\response.hpp" />
+    <ClInclude Include="..\..\include\via\http\response_status.hpp" />
+    <ClInclude Include="..\..\include\via\http_client.hpp" />
+    <ClInclude Include="..\..\include\via\http_connection.hpp" />
+    <ClInclude Include="..\..\include\via\http_server.hpp" />
+    <ClInclude Include="..\..\include\via\no_except.hpp" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -158,6 +173,7 @@
     <ClCompile Include="..\http\header_field.cpp" />
     <ClCompile Include="..\http\request.cpp" />
     <ClCompile Include="..\http\request_method.cpp" />
+    <ClCompile Include="..\http\request_router.cpp" />
     <ClCompile Include="..\http\response.cpp" />
     <ClCompile Include="..\http\response_status.cpp" />
     <ClCompile Include="..\parseCmd.cpp" />
