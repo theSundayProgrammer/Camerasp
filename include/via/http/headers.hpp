@@ -271,9 +271,7 @@ namespace via
       /// Add a header to the collection.
       /// @param name the field name (in lower case)
       /// @param value the field value.
-      void add(const std::string& name, const std::string& value)
-      { fields_.insert(std::unordered_map<std::string, std::string>::value_type
-                     (name, value)); }
+      void add(const std::string& name, const std::string& value);
 
       /// Find the value for a given header name.
       /// Note: the name must be in lowercase for received message_headers.
@@ -312,6 +310,10 @@ namespace via
       bool valid() const NOEXCEPT
       { return valid_; }
 
+      // @return headers as a map
+      const std::unordered_map<std::string, std::string>& fields() const
+      { return fields_; }
+      
       /// Output the message_headers as a string.
       /// Note: it is NOT terminated with an extra CRLF tso that it parses
       /// the are_headers_split function.
