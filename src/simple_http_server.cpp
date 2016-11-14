@@ -17,7 +17,7 @@ const std::string configPath("./");
 #else
 #include <raspicam/raspicam_still.h>
 typedef int errno_t;
-const std::string configPath("/srv/camerasp/options.txt");
+const std::string configPath("/srv/camerasp/");
 #endif
 #include <jpeg/jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
