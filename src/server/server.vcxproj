@@ -130,12 +130,14 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RASPICAM_MOCK;_WIN32_WINNT=0x0603;ASIO_STANDALONE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <PrecompiledHeaderFile />
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include;c:\usr\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,6 +151,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\httpEventHandler.hpp" />
     <ClInclude Include="..\..\include\via\http\character.hpp" />
     <ClInclude Include="..\..\include\via\http\chunk.hpp" />
     <ClInclude Include="..\..\include\via\http\headers.hpp" />
@@ -167,6 +170,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\httpEventHandler.cpp" />
     <ClCompile Include="..\http\character.cpp" />
     <ClCompile Include="..\http\chunk.cpp" />
     <ClCompile Include="..\http\headers.cpp" />
@@ -178,6 +182,7 @@
     <ClCompile Include="..\http\response_status.cpp" />
     <ClCompile Include="..\parseCmd.cpp" />
     <ClCompile Include="..\simple_http_server.cpp" />
+    <ClCompile Include="..\timer.cpp" />
     <ClCompile Include="raspicamMock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

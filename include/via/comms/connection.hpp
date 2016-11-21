@@ -633,7 +633,7 @@ namespace via
 
         // Call shutdown with the callback
         SocketAdaptor::shutdown([weak_ptr, tx_queue]
-                        (ASIO_ERROR_CODE const& error, int bytes)
+                        (ASIO_ERROR_CODE const& error, size_t bytes)
                         { write_callback(weak_ptr, error, bytes, tx_queue); });
       }
 
