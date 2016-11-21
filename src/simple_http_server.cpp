@@ -10,7 +10,6 @@
 #include <ctime>
 #include <iostream>
 #include <errno.h>
-#ifdef RASPICAM_MOCK
 #include <jpeg/jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
 #include <algorithm>
@@ -22,6 +21,7 @@
 #include <streambuf>
 #include <map>
 #include <httpEventHandler.hpp>
+#ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
 const std::string configPath("./");
