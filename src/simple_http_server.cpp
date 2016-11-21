@@ -93,7 +93,7 @@ int main(int /* argc */, char* argv[]){
       asio::io_service io_service;
       pService = &io_service;
       Camerasp::high_resolution_timer timer(io_service);
-      Camerasp::setTimer(timer);
+      Camerasp::setTimer(timer,camera);
       // Create the HTTP server, attach the request handler
       http_server_type http_server(io_service);
       Handlers handler(camera);

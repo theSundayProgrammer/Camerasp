@@ -8,6 +8,7 @@
 #include <map>
 #include <asio.hpp>
 #include <chrono>
+#include <jpeg/jpgrdwr.h>
 namespace Camerasp
 {
   std::string lowerCase(std::string const& str);
@@ -17,6 +18,9 @@ namespace Camerasp
   typedef asio::basic_waitable_timer<
     std::chrono::high_resolution_clock>
     high_resolution_timer;
-  void setTimer(high_resolution_timer& timer);
+  void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
   extern int quitFlag;
+  extern unsigned int curImg;
+  extern const unsigned int maxSize;
+  extern std::vector<unsigned char> imagebuffers[];
 }

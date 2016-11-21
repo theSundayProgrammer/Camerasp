@@ -1,6 +1,8 @@
 #include <httpEventHandler.hpp>  
 #include <fstream>
 #include <jpeg/jpgrdwr.h>
+#include <camerasp\parseCmd.hpp>
+
 /// A string to send in responses.
 const std::string response_body
 (std::string("<html>\r\n") +
@@ -179,26 +181,7 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
   std::pair<bool, std::vector<unsigned char> > 
     Handlers::getContent(std::string const& uri)
   {
-    camera_.grab();
-    int siz = camera_.getImageBufferSize();
-    Camerasp::ImgInfo info;
-    info.buffer.resize(siz);
-    camera_.retrieve((unsigned char*)(&info.buffer[0]));
-    info.image_height = camera_.getHeight();
-    std::cout << "H W " << camera_.getHeight() << " " << camera_.getWidth() << std::endl;
-    info.image_width = camera_.getWidth();
-    info.quality = 100;
-    info.row_stride = info.image_width * 3;
-    std::vector<unsigned char> buffer;
-    if (info.image_height > 0 && info.image_width > 0) {
-      info.quality = 100;
-      std::cout << "Image Size = " << info.buffer.size() << std::endl;
-      buffer = write_JPEG_dat(info);
-      std::cout << "Data Size = " << buffer.size() << std::endl;
-      return std::make_pair(true, buffer);
-    }
-    else
-      return std::make_pair(false, std::vector<unsigned char>());
+    return std::make_pair(true, Camerasp::imagebuffers[Camerasp::curImg]);
   }
   std::pair<via::http::tx_response, std::string> 
     Handlers::getGETResponse(std::string const& uri)
