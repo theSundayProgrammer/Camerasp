@@ -151,6 +151,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\httpEventHandler.hpp" />
     <ClInclude Include="..\..\include\via\http\character.hpp" />
     <ClInclude Include="..\..\include\via\http\chunk.hpp" />
     <ClInclude Include="..\..\include\via\http\headers.hpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\httpEventHandler.cpp" />
     <ClCompile Include="..\http\character.cpp" />
     <ClCompile Include="..\http\chunk.cpp" />
     <ClCompile Include="..\http\headers.cpp" />
