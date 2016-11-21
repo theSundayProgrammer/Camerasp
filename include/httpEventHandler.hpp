@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CAMERASP_HTTP_EVENT_HANDLER
+#define CAMERASP_HTTP_EVENT_HANDLER
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #else
@@ -67,3 +69,4 @@ private:
   
   raspicam::RaspiCam& camera_;
 };
+#endif
