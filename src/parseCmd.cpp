@@ -144,5 +144,18 @@ namespace Camerasp
       }
       return result;
     }
-  
+    errno_t readOptions(std::string const& fileName, std::string& options)
+    {
+      FILE *fp = nullptr;
+      errno_t err = fopen_s(&fp, fileName.c_str(), "r");
+      if (err == 0)
+      {
+        for (int c = getc(fp); c != EOF; c = getc(fp))
+        {
+          if (!isspace(c)) options.push_back(c);
+        }
+        fclose(fp);
+      }
+      return err;
+    }
 }

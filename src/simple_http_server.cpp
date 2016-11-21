@@ -31,17 +31,7 @@ const std::string configPath("/srv/camerasp/options.txt");
 #include <functional>
 #include <streambuf>
 #include <map>
-/// Define an HTTP server using std::string to store message bodies
-//
-// time_t_timer.cpp
-// ~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2016 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
-
+int Camerasp::quitFlag = 0;
 
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
 typedef http_server_type::http_connection_type http_connection;
@@ -300,11 +290,6 @@ typedef int distance;
 
 asio::io_service* pService = nullptr;
 
-void my_handler(int param)
-{
-  if (pService)
-    pService->stop();
-}
 #ifndef RASPICAM_MOCK
 errno_t fopen_s(FILE** fp, const char* name, const char* mode)
 {
@@ -314,37 +299,20 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode)
 }
 #endif
 
-void print(const ASIO_ERROR_CODE& /*e*/)
-{
-  std::cout << "Hello, world!" << std::endl;
-}
-errno_t getOptions(std::string const& fileName, std::string& options)
-{
-  FILE *fp = nullptr;
-  errno_t err = fopen_s(&fp, fileName.c_str(), "r");
-  if (err == 0)
-  {
-    for (int c = getc(fp); c != EOF; c = getc(fp))
-    {
-      if (c != '\n') options.push_back(c);
-    }
-    fclose(fp);
-  }
-  return err;
-}
-int main(int /* argc */, char* argv[])
-{
+
+int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
   std::string app_name(argv[0]);
   unsigned short port_number(8088);
   std::cout << app_name << ": " << port_number << std::endl;
   raspicam::RaspiCam camera;
-  try
-  {
+  try  {
     std::cout << "Connecting to camera" << std::endl;
     std::string options;
-    errno_t err = getOptions(configPath + "options.txt", options);
-    if (err == 0) {
+    errno_t err = Camerasp::readOptions(configPath + "options.txt", options);
+    if (err)     {
+      std::cout << "error in opening options file " << std::endl;
+    }   else {
       auto opts = Camerasp::tokenize(options);
       Camerasp::processCommandLine(opts, camera);
       if (!camera.open()) {
@@ -353,31 +321,32 @@ int main(int /* argc */, char* argv[])
       } // The asio io_service.
       asio::io_service io_service;
       pService = &io_service;
-
+      Camerasp::high_resolution_timer timer(io_service);
+      Camerasp::setTimer(timer);
       // Create the HTTP server, attach the request handler
       http_server_type http_server(io_service);
       Handlers handler(camera);
-      http_server.request_received_event(std::bind(&Handlers::request, handler, _1, _2, _3));
-      http_server.chunk_received_event(std::bind(&Handlers::chunk, handler, _1, _2, _3));
-      http_server.request_expect_continue_event(std::bind(&Handlers::expect_continue, handler, _1, _2, _3));
-      http_server.invalid_request_event(std::bind(&Handlers::invalid_request, handler, _1, _2, _3));
-      http_server.socket_connected_event(std::bind(&Handlers::connected, handler, _1));
+      { // todo: refactor to an other function
+        http_server.request_received_event(std::bind(&Handlers::request, handler, _1, _2, _3));
+        http_server.chunk_received_event(std::bind(&Handlers::chunk, handler, _1, _2, _3));
+        http_server.request_expect_continue_event(std::bind(&Handlers::expect_continue, handler, _1, _2, _3));
+        http_server.invalid_request_event(std::bind(&Handlers::invalid_request, handler, _1, _2, _3));
+        http_server.socket_connected_event(std::bind(&Handlers::connected, handler, _1));
 
-      http_server.socket_disconnected_event(std::bind(&Handlers::disconnected, handler, _1));
-      http_server.message_sent_event(std::bind(&Handlers::message_sent, handler, _1));
+        http_server.socket_disconnected_event(std::bind(&Handlers::disconnected, handler, _1));
+        http_server.message_sent_event(std::bind(&Handlers::message_sent, handler, _1));
 
-      // set the connection timeout (10 seconds)
-      http_server.set_timeout(10000);
+        // set the connection timeout (10 seconds)
+        http_server.set_timeout(10000);
 
-      // set the connection buffer sizes
-      http_server.set_rx_buffer_size(16384);
-      http_server.tcp_server()->set_receive_buffer_size(16384);
-      http_server.tcp_server()->set_send_buffer_size(16384);
-
+        // set the connection buffer sizes
+        http_server.set_rx_buffer_size(16384);
+        http_server.tcp_server()->set_receive_buffer_size(16384);
+        http_server.tcp_server()->set_send_buffer_size(16384);
+      }
       // start accepting http connections on the port
       ASIO_ERROR_CODE error(http_server.accept_connections(port_number));
-      if (error)
-      {
+      if (error)    {
         std::cerr << "Error: " << error.message() << std::endl;
         return 1;
       }
@@ -393,9 +362,9 @@ int main(int /* argc */, char* argv[])
 #endif // #if defined(SIGQUIT)
 
       // register the handle_stop callback
-      signals_.async_wait([&http_server,&io_service]
-      (ASIO_ERROR_CODE const& error, int signal_number)
-      { 
+      signals_.async_wait([&]
+      (ASIO_ERROR_CODE const& error, int signal_number)  { 
+        Camerasp::quitFlag = 1;
         handle_stop(error, signal_number, http_server); 
         io_service.stop();
       });
@@ -403,40 +372,13 @@ int main(int /* argc */, char* argv[])
       // Start the server
       io_service.run();
     }
-    else {
-      std::cout << "error in opening options file " << std::endl;
-    }
+    
 
-  }
-  catch (std::exception& e)
-  {
+  }  catch (std::exception& e)  {
     std::cerr << "Exception:" << e.what() << std::endl;
     return 1;
   }
 
   return 0;
 }
-#ifdef RASPICAM_MOCK
-#include <camerasp/raspicamMock.hpp>
-#include <stdio.h>
 
-namespace Camerasp
-{
-  std::vector<unsigned char> write_JPEG_dat(struct Camerasp::ImgInfo const &dat)
-  {
-    std::vector<unsigned char> buffer;
-    FILE *fp = nullptr;
-    fopen_s(&fp, "C:\\Users\\Public\\Pictures\\figure_3.jpg", "rb");
-    if (fp)
-    {
-      for (int c = getc(fp); c != EOF; c = getc(fp))
-      {
-        buffer.push_back(c);
-      }
-      fclose(fp);
-    }
-    return buffer;
-
-  }
-}
-#endif

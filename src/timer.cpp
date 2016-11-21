@@ -27,7 +27,7 @@ namespace Camerasp {
     std::chrono::duration<double> diff = current - prev;
     std::cout << diff.count() << " s\n";
 
-    if (true) { // todo: set the proper condition
+    if (!quitFlag) { 
       timer.expires_from_now(prev + 2 * samplingPeriod - current);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer)));

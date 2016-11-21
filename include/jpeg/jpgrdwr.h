@@ -8,6 +8,7 @@ typedef JSAMPLE* JSAMPROW;
 #endif
 #include <string>
 #include <vector>
+#include <iterator>
 namespace Camerasp
 {
     struct ImgInfo
