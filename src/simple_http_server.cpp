@@ -8,6 +8,8 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <via/comms/tcp_adaptor.hpp>
 #include <via/http_server.hpp>
+#include <asio.hpp>
+#include <ctime>
 #include <iostream>
 #include <errno.h>
 #ifdef RASPICAM_MOCK
@@ -30,46 +32,22 @@ const std::string configPath("/srv/camerasp/options.txt");
 #include <streambuf>
 #include <map>
 /// Define an HTTP server using std::string to store message bodies
+//
+// time_t_timer.cpp
+// ~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2016 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+
 typedef via::http_server<via::comms::tcp_adaptor, std::string> http_server_type;
 typedef http_server_type::http_connection_type http_connection;
 typedef http_server_type::chunk_type http_chunk_type;
 
-namespace
-{
-  std::string lowerCase(std::string const& str)
-  {
-    std::string retval(str);
-    std::transform(std::begin(str), std::end(str), std::begin(retval), tolower);
-    return retval;
-  }
-  std::map<std::string, std::string>
-    tokenize(std::string const& query)
-  {
-    using namespace std;
-    map<string, string> result;
-    size_t offset = 0;
-    size_t pos = query.find('=', offset);
-    while (pos != string::npos)
-    {
-      string name = query.substr(offset, pos - offset);
-      offset = pos + 1;
-      pos = query.find('&', offset);
-      if (pos != string::npos && pos > offset)
-      {
-        string val = query.substr(offset, pos - offset);
-        result.insert(make_pair(lowerCase(name), val));
-        offset = pos + 1;
-      }
-      else {
-        string val = query.substr(offset);
-        if (!val.empty())
-          result.insert(make_pair(lowerCase(name), val));
-        break;
-      }
-      pos = query.find('=', offset);
-    }
-    return result;
-  }
+
   std::string filterCommand(std::string const& uri)
   {
     size_t pos = uri.find('/');
@@ -96,7 +74,7 @@ namespace
     std::string("<head><title>Accepted</title></head>\r\n") +
     std::string("<body><h1>Does not support chunks</h1></body>\r\n") +
     std::string("</html>\r\n"));
-}
+
 
   /**
    * @brief get image from camera andreturn as jpeg
@@ -336,6 +314,10 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode)
 }
 #endif
 
+void print(const ASIO_ERROR_CODE& /*e*/)
+{
+  std::cout << "Hello, world!" << std::endl;
+}
 errno_t getOptions(std::string const& fileName, std::string& options)
 {
   FILE *fp = nullptr;
@@ -363,8 +345,8 @@ int main(int /* argc */, char* argv[])
     std::string options;
     errno_t err = getOptions(configPath + "options.txt", options);
     if (err == 0) {
-      auto opts = tokenize(options);
-      processCommandLine(opts, camera);
+      auto opts = Camerasp::tokenize(options);
+      Camerasp::processCommandLine(opts, camera);
       if (!camera.open()) {
         std::cerr << "Error opening camera" << std::endl;
         return -1;
@@ -402,7 +384,9 @@ int main(int /* argc */, char* argv[])
 
       // The signal set is used to register termination notifications
       asio::signal_set signals_(io_service);
+#ifndef RASPICAM_MOCK
       signals_.add(SIGINT);
+#endif
       signals_.add(SIGTERM);
 #if defined(SIGQUIT)
       signals_.add(SIGQUIT);
