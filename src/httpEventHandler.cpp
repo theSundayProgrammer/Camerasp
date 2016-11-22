@@ -1,7 +1,7 @@
-#include <httpEventHandler.hpp>  
 #include <fstream>
 #include <jpeg/jpgrdwr.h>
-#include <camerasp\parseCmd.hpp>
+#include <camerasp/parseCmd.hpp>
+#include <httpEventHandler.hpp>  
 
 /// A string to send in responses.
 const std::string response_body

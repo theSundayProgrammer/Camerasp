@@ -6,6 +6,10 @@
 #include <raspicam/raspicam.h>
 #endif
 #include <map>
+#ifdef __GNUC__
+typedef int errno_t;
+errno_t fopen_s(FILE** fp, const char* name, const char* mode);
+#endif
 #include <asio.hpp>
 #include <chrono>
 #include <jpeg/jpgrdwr.h>

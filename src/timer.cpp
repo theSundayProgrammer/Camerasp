@@ -13,7 +13,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
-#include <camerasp\parseCmd.hpp>
+#include <camerasp/parseCmd.hpp>
 #include <jpeg/jpgrdwr.h>
 namespace Camerasp {
   const unsigned int maxSize=100;
