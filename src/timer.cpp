@@ -14,25 +14,26 @@
 #include <camerasp/parseCmd.hpp>
 #include <jpeg/jpgrdwr.h>
 #include <mutex>
+#include <atomic>
 namespace Camerasp {
-  const unsigned int maxSize=100;
-  unsigned int curImg=0;
+  const unsigned int maxSize = 100;
+  unsigned int curImg = 0;
   struct Imagebuffer {
     std::mutex m;
     std::vector<unsigned char> buffer;
   };
-  Imagebuffer imagebuffers[maxSize];
-
-  std::chrono::seconds samplingPeriod(1);
+  static Imagebuffer imagebuffers[maxSize];
+  static std::atomic<int> currentCount(0);
+  static std::chrono::seconds samplingPeriod(1);
+  static int quitFlag;
 
   std::chrono::time_point<std::chrono::system_clock> prev;
-  //std::chrono::time_point<std::chrono::system_clock> finish;
- 
-  void handle_timeout(const asio::error_code&, high_resolution_timer& timer, raspicam::RaspiCam& camera_)  {
+
+  void handle_timeout(const asio::error_code&, high_resolution_timer& timer, raspicam::RaspiCam& camera_) {
     using namespace std::placeholders;
     auto current = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = current - prev;
-    unsigned int next = (curImg + 1)%maxSize;
+    unsigned int next = (curImg + 1) % maxSize;
     {
       camera_.grab();
       int siz = camera_.getImageBufferSize();
@@ -49,14 +50,16 @@ namespace Camerasp {
         info.quality = 100;
         std::cout << "Image Size = " << info.buffer.size() << std::endl;
         buffer = write_JPEG_dat(info);
-        imagebuffers[next].m.lock();
-        imagebuffers[next].buffer.swap(buffer);
-        imagebuffers[next].m.unlock();
+        {
+          std::lock_guard<std::mutex> lock(imagebuffers[next].m);
+          imagebuffers[next].buffer.swap(buffer);
+        }
+        if (currentCount < maxSize) ++currentCount;
         Camerasp::curImg = next;
         std::cout << "Prev Data Size = " << buffer.size() << std::endl;
       }
     }
-    if (!quitFlag) { 
+    if (!quitFlag) {
       timer.expires_from_now(prev + 2 * samplingPeriod - current);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
@@ -68,20 +71,28 @@ namespace Camerasp {
     high_resolution_timer& timer,
     raspicam::RaspiCam& camera) {
     using namespace std::placeholders;
-    try    {
+    try {
+      handle_timeout(asio::error_code(), timer, camera);
+      quitFlag = 0;
       prev = std::chrono::system_clock::now();
       timer.expires_from_now(samplingPeriod);
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera)));
-    }  catch (std::exception& e)    {
+    }
+    catch (std::exception& e) {
       std::cout << "Exception: " << e.what() << "\n";
     }
   }
-  std::vector<unsigned char>  getImage(long k) {
-    unsigned int next = (curImg -k) % maxSize;
-    std::vector<unsigned char> imagebuffer;
-    imagebuffers[next].m.lock();
-    imagebuffer= imagebuffers[next].buffer;
-    imagebuffers[next].m.unlock();
+  std::vector<unsigned char>  getImage(int k) {
+
+    if (k > currentCount && currentCount < maxSize)
+      k = currentCount - 1;
+    unsigned int next = (curImg - k) % maxSize;
+    std::lock_guard<std::mutex> lock(imagebuffers[next].m);
+    std::vector<unsigned char> imagebuffer= imagebuffers[next].buffer;
     return imagebuffer;
+  }
+  void stopCapture()
+  {
+    quitFlag = 1;
   }
 }

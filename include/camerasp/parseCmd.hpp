@@ -30,9 +30,6 @@ namespace Camerasp
     std::chrono::high_resolution_clock>
     high_resolution_timer;
   void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
-  std::vector<unsigned char>  getImage(long k);
-  extern int quitFlag;
-  //extern unsigned int curImg;
-  //extern const unsigned int maxSize;
-  //extern std::vector<unsigned char> imagebuffers[];
+  std::vector<unsigned char>  getImage(int k);
+  void stopCapture();
 }

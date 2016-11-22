@@ -31,7 +31,6 @@ const std::string configPath="./";
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
 #endif
-int Camerasp::quitFlag = 0;
 
 
   /// The stop callback function.
@@ -92,6 +91,7 @@ int main(int /* argc */, char* argv[]){
       } // The asio io_service.
       asio::io_service io_service;
       pService = &io_service;
+      //Begin Camera Capture
       Camerasp::high_resolution_timer timer(io_service);
       Camerasp::setTimer(timer,camera);
       // Create the HTTP server, attach the request handler
@@ -135,7 +135,7 @@ int main(int /* argc */, char* argv[]){
       // register the handle_stop callback
       signals_.async_wait([&]
       (ASIO_ERROR_CODE const& error, int signal_number)  { 
-        Camerasp::quitFlag = 1;
+        Camerasp::stopCapture();
         handle_stop(error, signal_number, http_server); 
         io_service.stop();
       });
