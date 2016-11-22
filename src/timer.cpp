@@ -71,5 +71,12 @@ namespace Camerasp {
       std::cout << "Exception: " << e.what() << "\n";
     }
   }
+  std::vector<unsigned char> & getImage(long k) {
+    unsigned int next = (curImg -k) % maxSize;
+    return imagebuffers[next];
+  }
+
+
+
 
 }
