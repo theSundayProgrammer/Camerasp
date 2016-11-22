@@ -4,61 +4,12 @@
 // adapted from IJG sample code
 // Distributed under the Boost Software License, Version 1.0.
 // 
-// http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////
 
 
 #include <stdio.h>
-
-/*
- * Include file for users of JPEG library.
- * You will need to have included system headers that define at least
- * the typedefs FILE and size_t before you can include jpeglib.h.
- * (stdio.h is sufficient on ANSI-conforming systems.)
- * You may also wish to include "jerror.h".
- */
-
 #include <jpeg/jpgrdwr.h>
-
-/*
- * <setjmp.h> is used for the optional error recovery mechanism shown in
- * the second part of the example.
-*/ 
-
 #include <setjmp.h>
-
-
-
-
-/******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
-
-/* This half of the example shows how to feed data into the JPEG compressor.
- * We present a minimal version that does not worry about refinements such
- * as error recovery (the JPEG code will just exit() if it gets an error).
- */
-
-
-/*
- * IMAGE DATA FORMATS:
- *
- * The standard input image format is a rectangular array of pixels, with
- * each pixel having the same number of "component" values (color channels).
- * Each pixel row is an array of JSAMPLEs (which typically are unsigned chars).
- * If you are working with color data, then the color values for each pixel
- * must be adjacent in the row; for example, R,G,B,R,G,B,R,G,B,... for 24-bit
- * RGB color.
- *
- * For this example, we'll assume that this data structure matches the way
- * our application has stored the image in memory, so we can just pass a
- * pointer to our image buffer.  In particular, let's say that the image is
- * RGB color and is described by:
- */
-
-
-/*
- * Sample routine for JPEG compression.  We assume that the target file name
- * and a compression quality factor are passed in.
- */
 
 #define BLOCK_SIZE 16384
 
@@ -100,28 +51,26 @@ std::vector<unsigned char> write_JPEG_dat (ImgInfo const& img)
   JSAMPROW row_pointer[1];
   int row_stride;		/* physical row width in image buffer */
 
-  /* Step 1: allocate and initialize JPEG compression object */
+  /*  allocate and initialize JPEG compression object */
   cinfo.err = jpeg_std_error(&jerr);
   /* Now we can initialize the JPEG compression object. */
   jpeg_create_compress(&cinfo);
 
-  /* Step 2: specify data destination (eg, a file) */
-  /* Note: steps 2 and 3 can be done in either order. */
+  /*  specify data destination (eg, a file) */
     jpeg_dest dest;
     cinfo.dest = &dest;
     dest.init_destination = &Camerasp::my_init_destination;
     dest.empty_output_buffer = &Camerasp::my_empty_output_buffer;
     dest.term_destination = &Camerasp::my_term_destination;
 
-  /* Step 3: set parameters for compression */
 
   /* First we supply a description of the input image.
    * Four fields of the cinfo struct must be filled in:
    */
-  cinfo.image_width = img.image_width; 	/* image width and height, in pixels */
+  cinfo.image_width = img.image_width; 	
   cinfo.image_height = img.image_height;
-  cinfo.input_components = 3;		/* # of color components per pixel */
-  cinfo.in_color_space = JCS_RGB; 	/* colorspace of input image */
+  cinfo.input_components = 3;		
+  cinfo.in_color_space = JCS_RGB; 	
   /* Now use the library's routine to set default compression parameters.
    * (You must set at least cinfo.in_color_space before calling this,
    * since the defaults depend on the source color space.)
@@ -132,15 +81,13 @@ std::vector<unsigned char> write_JPEG_dat (ImgInfo const& img)
    */
   jpeg_set_quality(&cinfo, img.quality, TRUE /* limit to baseline-JPEG values */);
 
-  /* Step 4: Start compressor */
+  /* Start compressor */
 
   /* TRUE ensures that we will write a complete interchange-JPEG file.
    * Pass TRUE unless you are very sure of what you're doing.
    */
   jpeg_start_compress(&cinfo, TRUE);
 
-  /* Step 5: while (scan lines remain to be written) */
-  /*           jpeg_write_scanlines(...); */
 
   /* Here we use the library's state variable cinfo.next_scanline as the
    * loop counter, so that we don't have to keep track ourselves.

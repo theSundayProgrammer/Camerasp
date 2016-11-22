@@ -63,9 +63,9 @@ public:
   
 
 private:
-  std::pair<bool, std::vector<unsigned char> > getContent(std::string const& uri);
+  std::pair<bool, std::vector<unsigned char> > getContent(long k);
   
-  std::pair<via::http::tx_response, std::string> getGETResponse(std::string const& uri);
+  std::pair<via::http::tx_response, std::string> getGETResponse(long k);
   
   raspicam::RaspiCam& camera_;
 };

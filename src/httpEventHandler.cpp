@@ -9,15 +9,36 @@ const std::string response_body
   std::string("<head><title>Accepted</title></head>\r\n") +
   std::string("<body><h1>Does not support chunks</h1></body>\r\n") +
   std::string("</html>\r\n"));
+struct UrlParser {
+  std::string command, query_key, query_value;
+  UrlParser(std::string const& uri) {
+    size_t pos = uri.find('/');
+    size_t start = (pos == std::string::npos) ? 0 : pos + 1;
+    pos = uri.find_first_of("?", start);
+    auto fin = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
+    command = std::string(uri.begin() + start, fin);
+    if (fin != uri.end()) {
+      pos = uri.find_first_of('&', ++pos);
+      std::string query(++fin, (pos == std::string::npos) ? uri.end() : uri.begin() + pos);
+      if (query.empty()) return;
+      pos = query.find_first_of('=', 0);
+      query_key = std::string(query.begin(), (pos == std::string::npos) ? query.end() : query.begin() + pos);
+      if (pos != std::string::npos) {
+        query_value = std::string(query.begin() + pos + 1, query.end());
+      }
+    }
 
-std::string filterCommand(std::string const& uri){
-  size_t pos = uri.find('/');
-  size_t start = (pos == std::string::npos) ? 0 : pos + 1;
-  pos = uri.find_first_of("/?", start);
-  auto fin = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
-  return std::string(uri.begin() + start, fin);
+  }
+};
+ bool isinteger(const std::string & s, long* k)
+{
+  if (s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
+
+  char * p;
+  *k = strtol(s.c_str(), &p, 10);
+
+  return (*p == 0);
 }
-
 Handlers::Handlers(raspicam::RaspiCam& Camera) : 
   camera_(Camera)
   {}
@@ -36,11 +57,17 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
 
     if (connection)
     {
-      std::string filtered = filterCommand(request.uri());
-      std::cout << filtered << std::endl;
-      if (filtered == "img.jpg")
+      UrlParser url(request.uri());
+      std::cout << url.command << std::endl;
+      if (url.command == "img.jpg")
       {
-        auto resp = getGETResponse(request.uri());
+        long k=0;
+        if (url.query_key == "prev") {
+          if (url.query_value.empty() ||  !isinteger(url.query_value, &k)) {
+            k = 0;
+          }
+        }
+        auto resp = getGETResponse(k);
         connection->send(std::move(resp.first), std::move(resp.second));
       }
       else {
@@ -178,27 +205,16 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
 
 
 
-  std::pair<bool, std::vector<unsigned char> > 
-    Handlers::getContent(std::string const& uri)
-  {
-    return std::make_pair(true, Camerasp::imagebuffers[Camerasp::curImg]);
-  }
   std::pair<via::http::tx_response, std::string> 
-    Handlers::getGETResponse(std::string const& uri)
+    Handlers::getGETResponse(long k)
   {
-    auto resp = getContent(uri);
-    if (resp.first) {
-      // output the request
+       // output the request
       via::http::tx_response response(via::http::response_status::code::OK);
       response.add_server_header();
       response.add_date_header();
       response.add_header("Content-Type", "image/jpeg");
-      response.add_content_length_header(resp.second.size());
-      std::string response_body((char*)(&resp.second[0]), resp.second.size());
+      std::vector<unsigned char>& resp = Camerasp::getImage(k);
+      response.add_content_length_header(resp.size());
+      std::string response_body((char*)(&resp[0]), resp.size());
       return std::make_pair(response, response_body);
-    }
-    else {
-      via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-      return std::make_pair(response, "Favicon Not Found");
-    }
   }
