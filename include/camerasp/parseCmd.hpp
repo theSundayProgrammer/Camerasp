@@ -1,3 +1,10 @@
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) Joseph Mariadassou
+// theSundayProgrammer@gmail.com
+// Distributed under the Boost Software License, Version 1.0.
+// 
+// http://www.boost.org/LICENSE_1_0.txt)
+//////////////////////////////////////////////////////////////////////////////
 #include <string>
 #include <vector>
 #ifdef RASPICAM_MOCK
@@ -19,7 +26,7 @@ namespace Camerasp
     std::chrono::high_resolution_clock>
     high_resolution_timer;
   void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
-  std::vector<unsigned char> & getImage(long k);
+  std::vector<unsigned char>  getImage(long k);
   extern int quitFlag;
   //extern unsigned int curImg;
   //extern const unsigned int maxSize;

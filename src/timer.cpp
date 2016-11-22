@@ -1,12 +1,10 @@
-//
-// time_t_timer.cpp
-// ~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2016 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+//////////////////////////////////////////////////////////////////////////////
+// Copyright (c) Joseph Mariadassou
+// theSundayProgrammer@gmail.com
+// Distributed under the Boost Software License, Version 1.0.
+// 
+// http://www.boost.org/LICENSE_1_0.txt)
+//////////////////////////////////////////////////////////////////////////////
 
 #include <asio.hpp>
 #include <ctime>
@@ -15,10 +13,15 @@
 #include <functional>
 #include <camerasp\parseCmd.hpp>
 #include <jpeg/jpgrdwr.h>
+#include <mutex>
 namespace Camerasp {
   const unsigned int maxSize=100;
   unsigned int curImg=0;
-  std::vector<unsigned char> imagebuffers[maxSize];
+  struct Imagebuffer {
+    std::mutex m;
+    std::vector<unsigned char> buffer;
+  };
+  Imagebuffer imagebuffers[maxSize];
 
   std::chrono::seconds samplingPeriod(1);
 
@@ -46,7 +49,9 @@ namespace Camerasp {
         info.quality = 100;
         std::cout << "Image Size = " << info.buffer.size() << std::endl;
         buffer = write_JPEG_dat(info);
-        imagebuffers[next].swap(buffer);
+        imagebuffers[next].m.lock();
+        imagebuffers[next].buffer.swap(buffer);
+        imagebuffers[next].m.unlock();
         Camerasp::curImg = next;
         std::cout << "Prev Data Size = " << buffer.size() << std::endl;
       }
@@ -71,12 +76,12 @@ namespace Camerasp {
       std::cout << "Exception: " << e.what() << "\n";
     }
   }
-  std::vector<unsigned char> & getImage(long k) {
+  std::vector<unsigned char>  getImage(long k) {
     unsigned int next = (curImg -k) % maxSize;
-    return imagebuffers[next];
+    std::vector<unsigned char> imagebuffer;
+    imagebuffers[next].m.lock();
+    imagebuffer= imagebuffers[next].buffer;
+    imagebuffers[next].m.unlock();
+    return imagebuffer;
   }
-
-
-
-
 }
