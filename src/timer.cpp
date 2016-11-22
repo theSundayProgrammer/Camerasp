@@ -11,7 +11,7 @@
 #include <iostream>
 #include <chrono>
 #include <functional>
-#include <camerasp\parseCmd.hpp>
+#include <camerasp/parseCmd.hpp>
 #include <jpeg/jpgrdwr.h>
 #include <mutex>
 namespace Camerasp {
