@@ -220,8 +220,7 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
       response.add_server_header();
       response.add_date_header();
       response.add_header("Content-Type", "image/jpeg");
-      std::vector<unsigned char>& resp = Camerasp::getImage(k);
-      response.add_content_length_header(resp.size());
-      std::string response_body((char*)(&resp[0]), resp.size());
-      return std::make_pair(response, response_body);
+      std::string responsebody = Camerasp::getImage(k);
+      response.add_content_length_header(responsebody.size());
+      return std::make_pair(response,responsebody );
   }
