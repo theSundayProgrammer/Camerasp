@@ -8,7 +8,7 @@
 #include <fstream>
 #include <jpeg/jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
-#include <httpEventHandler.hpp>  
+#include <camerasp/httpEventHandler.hpp>  
 
 /// A string to send in responses.
 const std::string response_body

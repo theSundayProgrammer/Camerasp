@@ -21,7 +21,7 @@
 #include <functional>
 #include <streambuf>
 #include <map>
-#include <httpEventHandler.hpp>
+#include <camerasp/httpEventHandler.hpp>
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
