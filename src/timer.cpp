@@ -28,14 +28,14 @@ namespace Camerasp {
   static std::chrono::seconds samplingPeriod(3);
   static int quitFlag=0;
   static int firstTime = 0;
-  std::chrono::time_point<std::chrono::system_clock> prev;
+  std::chrono::time_point<std::chrono::steady_clock> prev;
 
   void handle_timeout(
     const asio::error_code&,
     high_resolution_timer& timer,
     raspicam::RaspiCam& camera_) {
     using namespace std::placeholders;
-    auto current = std::chrono::system_clock::now();
+    auto current = high_resolution_timer::clock_type::now();
     std::chrono::duration<double> diff = current - prev;
     unsigned int next = (curImg + 1) % maxSize;
     {
@@ -64,7 +64,7 @@ namespace Camerasp {
           console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
         }
       }
-      timer.expires_from_now(firstTime == 0 ? prev + 2 * samplingPeriod - current : samplingPeriod);
+      timer.expires_at(prev + 2 * samplingPeriod);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
     }
@@ -73,13 +73,13 @@ namespace Camerasp {
 
   void setTimer(
     high_resolution_timer& timer,
-    raspicam::RaspiCam& camera) {
+    raspicam::RaspiCam& camera_) {
      using namespace std::placeholders;
     try {
       quitFlag = 0;
-      prev = std::chrono::system_clock::now();
-      firstTime = 1;
-      handle_timeout(asio::error_code(), timer, camera);
+      prev = high_resolution_timer::clock_type::now();
+      timer.expires_at(prev +  samplingPeriod);
+      timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
     }
     catch (std::exception& e) {
       console->error("Error: {}..", e.what());

@@ -14,11 +14,11 @@
 #include <chrono>
 #include <functional>
 typedef asio::basic_waitable_timer<
-    std::chrono::high_resolution_clock>
+    std::chrono::steady_clock>
   high_resolution_timer;
 
 std::chrono::seconds period(1);
-std::chrono::time_point<std::chrono::system_clock> prev, finish;
+std::chrono::time_point<std::chrono::steady_clock> prev, finish;
 std::string lowerCase(std::string const& str)
 {
   std::string retval(str);
@@ -43,7 +43,7 @@ std::string lowerCase(std::string const& str)
 void handle_timeout(const asio::error_code&, high_resolution_timer& timer)
 {
   using namespace std::placeholders;
-  auto current = std::chrono::system_clock::now();
+  auto current = std::chrono::steady_clock::now();
   std::chrono::duration<double> diff = current - prev;
   std::cout << diff.count() << " s\n";
 
@@ -62,7 +62,7 @@ int main()
   try
   {
     asio::io_context io_context;
-    prev = std::chrono::system_clock::now();
+    prev = std::chrono::steady_clock::now();
     high_resolution_timer timer(io_context);
     finish = prev + std::chrono::seconds(10);
     timer.expires_from_now(period);

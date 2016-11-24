@@ -30,7 +30,7 @@ namespace Camerasp
   std::map<std::string, std::string>   tokenize(std::string const& query);
   errno_t readOptions(std::string const& fileName, std::string& options);
   typedef asio::basic_waitable_timer<
-    std::chrono::high_resolution_clock>
+    std::chrono::steady_clock>
     high_resolution_timer;
   void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
   std::string getImage(int k);

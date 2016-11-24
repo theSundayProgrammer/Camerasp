@@ -78,6 +78,7 @@ int main(int /* argc */, char* argv[]){
   namespace spd = spdlog;
   std::string app_name(argv[0]);
   console = spd::rotating_logger_mt("console", logpath, 1024*1024* 5, 3);
+  //console = spd::stdout_color_mt("console");
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
   raspicam::RaspiCam camera;
