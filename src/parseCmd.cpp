@@ -95,8 +95,10 @@ namespace Camerasp
     Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
     auto it = nameVal.find("format");
-    if (it != end(nameVal))
-      Camera.setFormat(getFormatFromString(it->second));
+    raspicam::RASPICAM_FORMAT fmt= (it != end(nameVal)) ?
+      getFormatFromString(it->second) :
+      raspicam::RASPICAM_FORMAT_RGB;
+    Camera.setFormat(fmt);
     it = nameVal.find("exposure");
     if (it != end(nameVal))
       Camera.setExposure(getExposureFromString(it->second));
