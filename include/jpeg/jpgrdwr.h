@@ -33,7 +33,18 @@ inline void Camerasp::ImgInfo::put_scan_line(JSAMPLE *data, int row_stride) cons
 
 inline JSAMPROW Camerasp::ImgInfo::get_scan_line(int scan_line,  int stride) const
 {
-    return &buffer[scan_line*row_stride];
+  JSAMPROW retval= &buffer[scan_line*row_stride];
+  for (unsigned int i = 0; i < row_stride; i += 3)
+  {
+    JSAMPLE& r = *retval;
+    JSAMPLE& g = *(retval + 1);
+    JSAMPLE& b = *(retval + 2);
+    JSAMPLE t = r;
+    r = b;
+    b = t;
+    retval += 3;
+  }
+  return &buffer[scan_line*row_stride];
 }
 
 #endif
