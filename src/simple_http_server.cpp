@@ -26,10 +26,12 @@
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
 const std::string configPath="./";
+const std::string logpath = "logs/camerasp";
 #else
 #include <raspicam/raspicam_still.h>
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
+const std::string logpath = "/home/pi/logs/camerasp";
 #endif
 std::shared_ptr<spdlog::logger> console;
 
@@ -75,7 +77,7 @@ int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
   namespace spd = spdlog;
   std::string app_name(argv[0]);
-  console = spd::stdout_color_mt("console");
+  console = spd::rotating_logger_mt("console", logpath, 1024*1024* 5, 3);
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
   raspicam::RaspiCam camera;
@@ -142,9 +144,12 @@ int main(int /* argc */, char* argv[]){
         handle_stop(error, signal_number, http_server); 
         io_service.stop();
       });
-
-      // Start the server
+      // Start the on two  worker threads server
+      std::thread thread1{ [&io_service]() { io_service.run(); } };
+      std::thread thread2{ [&io_service]() { io_service.run(); } };
       io_service.run();
+      thread1.join();
+      thread2.join();
     }
     
 
