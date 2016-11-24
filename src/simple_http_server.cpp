@@ -8,7 +8,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include <asio.hpp>
 #include <ctime>
-#include <iostream>
+//#include <iostream>
 #include <errno.h>
 
 #include <jpeg/jpgrdwr.h>
@@ -31,6 +31,7 @@ const std::string configPath="./";
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
 #endif
+std::shared_ptr<spdlog::logger> console;
 
 
   /// The stop callback function.
@@ -41,7 +42,7 @@ const std::string configPath="/srv/camerasp/";
     int, // signal_number,
     http_server_type& http_server)
   {
-    std::cout << "Shutting down" << std::endl;
+    console->info("shutting down ");
     http_server.shutdown();
   }
 
@@ -72,21 +73,23 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode)
 
 int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
+  namespace spd = spdlog;
   std::string app_name(argv[0]);
+  console = spd::stdout_color_mt("console");
+  console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
-  std::cout << app_name << ": " << port_number << std::endl;
   raspicam::RaspiCam camera;
   try  {
-    std::cout << "Connecting to camera" << std::endl;
     std::string options;
     errno_t err = Camerasp::readOptions(configPath + "options.txt", options);
     if (err)     {
-      std::cout << "error in opening options file " << std::endl;
+      console->error("error in opening options file ");
     }   else {
       auto opts = Camerasp::tokenize(options);
+      console->info("Welcome to spdlog!");
       Camerasp::processCommandLine(opts, camera);
       if (!camera.open()) {
-        std::cerr << "Error opening camera" << std::endl;
+        console->critical("Error opening camera");
         return -1;
       } // The asio io_service.
       asio::io_service io_service;
@@ -118,7 +121,7 @@ int main(int /* argc */, char* argv[]){
       // start accepting http connections on the port
       ASIO_ERROR_CODE error(http_server.accept_connections(port_number));
       if (error)    {
-        std::cerr << "Error: " << error.message() << std::endl;
+        console->critical ("Error: {0}", error.message());
         return 1;
       }
 
@@ -146,10 +149,10 @@ int main(int /* argc */, char* argv[]){
     
 
   }  catch (std::exception& e)  {
-    std::cerr << "Exception:" << e.what() << std::endl;
+    console->error("Exception: {0}", e.what());
     return 1;
   }
-
+  spd::drop_all();
   return 0;
 }
 

@@ -19,8 +19,7 @@
 #include "via/http/response.hpp"
 #include "via/comms/connection.hpp"
 #include <deque>
-#include <iostream>
-
+#include <spdlog/spdlog.h>
 namespace via
 {
   ////////////////////////////////////////////////////////////////////////////
@@ -123,8 +122,8 @@ namespace via
           tcp_pointer->shutdown();
       }
       else
-        std::cerr << "http_connection::send connection weak pointer expired"
-                  << std::endl;
+        spdlog::get("console")->error("http_connection::send connection weak pointer expired");
+                  
       return false;
     }
 

@@ -55,7 +55,7 @@
 #endif
 #include <map>
 #include <stdexcept>
-#include <iostream>
+//#include <iostream>
 
 namespace via
 {
@@ -185,29 +185,28 @@ namespace via
       {
         // Create and configure a new http_connection_type.
         std::shared_ptr<http_connection_type> http_connection
-            (new http_connection_type(connection,
-                                      strict_crlf_,
-                                      max_whitespace_,
-                                      max_method_length_,
-                                      max_uri_length_,
-                                      max_line_length_,
-                                      max_header_number_,
-                                      max_header_length_,
-                                      max_body_size_,
-                                      max_chunk_size_));
+        (new http_connection_type(connection,
+          strict_crlf_,
+          max_whitespace_,
+          max_method_length_,
+          max_uri_length_,
+          max_line_length_,
+          max_header_number_,
+          max_header_length_,
+          max_body_size_,
+          max_chunk_size_));
 
         http_connection->set_translate_head(translate_head_);
         http_connection->set_concatenate_chunks(!http_chunk_handler_);
 
         http_connections_.insert
-            (connection_collection_value_type(pointer, http_connection));
+        (connection_collection_value_type(pointer, http_connection));
         // signal that the socket is connected
         if (connected_handler_)
           connected_handler_(http_connection);
       }
       else
-        std::cerr << "http_server, error: duplicate connection for "
-                  << iter->second->remote_address() << std::endl;
+        spdlog::get("console")->error("http_server, error: duplicate connection for {0}", iter->second->remote_address());
     }
 
     /// Route the request using the request_router_.
@@ -348,8 +347,7 @@ namespace via
         connection_collection_iterator iter(http_connections_.find(pointer));
         if (iter == http_connections_.end())
         {
-          std::cerr << "http_server, event_handler error: connection not found "
-                    << std::endl;
+          spdlog::get("console")->error("http_server, event_handler error: connection not found ");
           return;
         }
 
@@ -375,11 +373,10 @@ namespace via
     /// Receive an error from the underlying comms connection.
     /// @param error the boost error_code.
     // @param connection a weak ponter to the underlying comms connection.
-    void error_handler(const ASIO_ERROR_CODE &error,
+    void error_handler(const ASIO_ERROR_CODE &ec,
                        std::weak_ptr<connection_type>) // connection)
     {
-      std::cerr << "error_handler" << std::endl;
-      std::cerr << error <<  std::endl;
+      console->error("error_handler {0} : {1}", ec.category().name(), ec.value());
     }
 
     ////////////////////////////////////////////////////////////////////////

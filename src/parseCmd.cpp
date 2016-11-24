@@ -11,7 +11,9 @@
 #include <algorithm>
 #include <camerasp/parseCmd.hpp>
 #include <map>
-#include <iostream>
+#include <cstdarg>
+
+
 //returns the value of a command line param. If not found, defvalue is returned
 bool getParamVal ( std::string param,std::map<std::string,std::string> const& args, bool defvalue ) {
     using namespace std;
@@ -34,7 +36,7 @@ int getParamVal ( std::string param,std::map<std::string,std::string> const& arg
     else
     {
         int n = atoi(it->second.c_str());
-        std::cout << param << ":" << n << std::endl;
+        console->info("{0} : {1}", param, n);
         return n;
     }
 }
@@ -157,4 +159,5 @@ namespace Camerasp
       }
       return err;
     }
+
 }

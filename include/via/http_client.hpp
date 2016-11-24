@@ -17,7 +17,7 @@
 #include "via/http/request.hpp"
 #include "via/http/response.hpp"
 #include "via/comms/connection.hpp"
-#include <iostream>
+//#include <iostream>
 
 namespace via
 {

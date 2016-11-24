@@ -55,17 +55,16 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
       via::http::rx_request const& request,
       std::string const& body)
   {
-    std::cout << "\n\nRx request: " << request.uri() << std::endl;
+    //std::cout << "\n\nRx request: " << request.uri() << std::endl;
 
-    std::cout << request.headers().to_string() << std::endl;
-    std::cout << "Rx body: " << body << std::endl;
+    //std::cout << "Rx body: " << body << std::endl;
 
     http_connection::shared_pointer connection(weak_ptr.lock());
 
     if (connection)
     {
       UrlParser url(request.uri());
-      std::cout << url.command << std::endl;
+      //std::cout << url.command << std::endl;
       if (url.command == "img.jpg")
       {
         long k=0;
@@ -91,17 +90,17 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
           response.add_header("charset", "utf-8");
           response.add_content_length_header(str.size());
           connection->send(response, str);
-          //std::cout << str << std::endl;
+          ////std::cout << str << std::endl;
         }
         else {
           via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
           connection->send(response, "Index Not Found");
-          std::cout << "index not found" << std::endl;
+          //std::cout << "index not found" << std::endl;
         }
       }
     }
     else {
-      std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
+      console->error("Failed to lock http_connection::weak_pointer");
     }
   }
   void Handlers::respond_to_request(http_connection::weak_pointer weak_ptr)
@@ -123,10 +122,10 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
 
     }
     else
-      std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
+      console->error("Failed to lock http_connection::weak_pointer");
   }
   /// The handler for incoming HTTP chunks.
-  /// Outputs the chunk header and body to std::cout.
+  /// Outputs the chunk header and body to //std::cout.
   void Handlers::chunk(
     http_connection::weak_pointer weak_ptr,
     http_chunk_type const& chunk,
@@ -134,15 +133,11 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
   {
     if (chunk.is_last())
     {
-      std::cout << "Rx chunk is last, extension: " << chunk.extension()
-        << " trailers: " << chunk.trailers().to_string() << std::endl;
+      console->debug("Rx chunk is last, extension: {0} trailers {1} ", chunk.extension(), chunk.trailers().to_string());
 
       // Only send a response to the last chunk.
       respond_to_request(weak_ptr);
     }
-    else
-      std::cout << "Rx chunk, size: " << chunk.size()
-      << " data: " << data << std::endl;
   }
 
   /// A handler for HTTP requests containing an "Expect: 100-continue" header.
@@ -156,9 +151,9 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
   {
     static const auto MAX_LENGTH(1024);
 
-    std::cout << "expect_continue_handler\n";
-    std::cout << "rx request: " << request.to_string();
-    std::cout << "rx headers: " << request.headers().to_string() << std::endl;
+    //std::cout << "expect_continue_handler\n";
+    //std::cout << "rx request: " << request.to_string();
+    //std::cout << "rx headers: " << request.headers().to_string() << std::endl;
 
     // Reject the message if it's too big, otherwise continue
     via::http::tx_response response((request.content_length() > MAX_LENGTH) ?
@@ -169,7 +164,7 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
     if (connection)
       connection->send(std::move(response));
     else
-      std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
+      console->error("Failed to lock http_connection::weak_pointer");
   }
 
   /// A handler for the signal sent when an invalid HTTP mesasge is received.
@@ -178,36 +173,36 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
     via::http::rx_request const&, // request,
     std::string const& /* body */)
   {
-    std::cout << "Invalid request from: ";
+    //std::cout << "Invalid request from: ";
     http_connection::shared_pointer connection(weak_ptr.lock());
     if (connection)
     {
-      std::cout << weak_ptr.lock()->remote_address() << std::endl;
+      //std::cout << weak_ptr.lock()->remote_address() << std::endl;
       // Send the default response
       connection->send_response();
       // Disconnect the client
       connection->disconnect();
     }
     else
-      std::cerr << "Failed to lock http_connection::weak_pointer" << std::endl;
+      console->error("Failed to lock http_connection::weak_pointer");
   }
 
   /// A handler for the signal sent when an HTTP socket is connected.
   void Handlers::connected(http_connection::weak_pointer weak_ptr)
   {
-    std::cout << "Connected: " << weak_ptr.lock()->remote_address() << std::endl;
+    //std::cout << "Connected: " << weak_ptr.lock()->remote_address() << std::endl;
   }
 
   /// A handler for the signal sent when an HTTP socket is disconnected.
   void Handlers::disconnected(http_connection::weak_pointer weak_ptr)
   {
-    std::cout << "Disconnected: " << weak_ptr.lock()->remote_address() << std::endl;
+    //std::cout << "Disconnected: " << weak_ptr.lock()->remote_address() << std::endl;
   }
 
   /// A handler for the signal when a message is sent.
   void Handlers::message_sent(http_connection::weak_pointer) // weak_ptr)
   {
-    std::cout << "response sent" << std::endl;
+    //std::cout << "response sent" << std::endl;
   }
 
 

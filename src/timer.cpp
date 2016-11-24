@@ -8,13 +8,14 @@
 
 #include <asio.hpp>
 #include <ctime>
-#include <iostream>
 #include <chrono>
 #include <functional>
 #include <camerasp/parseCmd.hpp>
 #include <jpeg/jpgrdwr.h>
 #include <mutex>
 #include <atomic>
+
+
 namespace Camerasp {
   const unsigned int maxSize = 100;
   unsigned int curImg = 0;
@@ -60,10 +61,9 @@ namespace Camerasp {
           }
           if (currentCount < maxSize) ++currentCount;
           Camerasp::curImg = next;
-          std::cout << "Prev Data Size = " << buffer.size() << std::endl;
+          console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
         }
       }
-      std::cout << diff.count() << " s\n";
       timer.expires_from_now(firstTime == 0 ? prev + 2 * samplingPeriod - current : samplingPeriod);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
@@ -74,7 +74,7 @@ namespace Camerasp {
   void setTimer(
     high_resolution_timer& timer,
     raspicam::RaspiCam& camera) {
-    using namespace std::placeholders;
+     using namespace std::placeholders;
     try {
       quitFlag = 0;
       prev = std::chrono::system_clock::now();
@@ -82,7 +82,7 @@ namespace Camerasp {
       handle_timeout(asio::error_code(), timer, camera);
     }
     catch (std::exception& e) {
-      std::cout << "Exception: " << e.what() << "\n";
+      console->error("Error: {}..", e.what());
     }
   }
   std::string  getImage(int k) {
