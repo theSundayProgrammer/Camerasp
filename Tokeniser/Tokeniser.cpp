@@ -71,8 +71,8 @@ void testUrlParser(std::string const& url_)
   std::cout << url.command << "\n key: " << url.query_key << "\n value: " << url.query_value << std::endl;
 }
 void Test_itoa(int k) {
-  char buffer[4];
-  itoa(k, buffer, 16);
+  char buffer[8];
+  sprintf(buffer, "%04d", k);
   std::cout << std::string(buffer) << std::endl;
 }
 
