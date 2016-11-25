@@ -23,10 +23,12 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 #include <spdlog/spdlog.h>
 extern std::shared_ptr<spdlog::logger> console;
 
-namespace Camerasp
-{
+namespace Camerasp{
   std::string lowerCase(std::string const& str);
-  void processCommandLine(std::map<std::string, std::string> const & args, raspicam::RaspiCam &Camera);
+  void processCommandLine(
+    std::map<std::string, 
+    std::string> const & args, 
+    raspicam::RaspiCam &Camera);
   std::map<std::string, std::string>   tokenize(std::string const& query);
   errno_t readOptions(std::string const& fileName, std::string& options);
   typedef asio::basic_waitable_timer<
@@ -35,4 +37,8 @@ namespace Camerasp
   void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
   std::string getImage(int k);
   void stopCapture();
+  void save_image(
+    std::vector<unsigned char> const& buffer, 
+    std::string const& fName);
+
 }

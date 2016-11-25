@@ -70,7 +70,17 @@ void testUrlParser(std::string const& url_)
   UrlParser url(url_);
   std::cout << url.command << "\n key: " << url.query_key << "\n value: " << url.query_value << std::endl;
 }
-int main()
+void Test_itoa(int k) {
+  char buffer[4];
+  itoa(k, buffer, 16);
+  std::cout << std::string(buffer) << std::endl;
+}
+
+int main() {
+  for (int k = 0; k < 1000; k += 13)
+    Test_itoa(k);
+}
+int main1()
 {
   testUrlParser("/img?prev=1");
   testUrlParser("/img?prev=");

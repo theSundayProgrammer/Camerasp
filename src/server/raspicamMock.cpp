@@ -31,17 +31,13 @@ namespace raspicam
   bool RaspiCam::open(bool) { console->debug("open"); return true; }
 
 }
-namespace Camerasp
-{
-  std::vector<unsigned char> write_JPEG_dat(struct Camerasp::ImgInfo const &dat)
-  {
+namespace Camerasp{
+  std::vector<unsigned char> write_JPEG_dat(struct Camerasp::ImgInfo const &dat)  {
     std::vector<unsigned char> buffer;
     FILE *fp = nullptr;
     fopen_s(&fp, "C:\\Users\\Public\\Pictures\\figure_3.jpg", "rb");
-    if (fp)
-    {
-      for (int c = getc(fp); c != EOF; c = getc(fp))
-      {
+    if (fp)    {
+      for (int c = getc(fp); c != EOF; c = getc(fp)) {
         buffer.push_back(c);
       }
       fclose(fp);
@@ -49,4 +45,5 @@ namespace Camerasp
     return buffer;
 
   }
+
 }
