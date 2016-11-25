@@ -14,12 +14,12 @@
 #include <jpeg/jpgrdwr.h>
 #include <mutex>
 #include <atomic>
-
+#include <stdlib.h>
 
 namespace Camerasp {
   const unsigned int maxSize = 100;
   unsigned int curImg = 0;
-  std::atomic<int> fileCounter = 0;
+  std::atomic<int> fileCounter;
   
   struct Imagebuffer {
     std::mutex m;
@@ -63,7 +63,8 @@ namespace Camerasp {
           console->debug("Image Size = {0}", info.buffer.size());
           buffer = write_JPEG_dat(info);
           char intstr[8];
-          _itoa(++fileCounter, intstr, 16);
+          //itoa(++fileCounter, intstr, 16);
+          sprintf(intstr,"%04d",++fileCounter);
           save_image(buffer, pathname_prefix + intstr + ".jpg");
           {
             std::lock_guard<std::mutex> lock(imagebuffers[next].m);
