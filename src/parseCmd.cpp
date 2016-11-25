@@ -12,7 +12,8 @@
 #include <camerasp/parseCmd.hpp>
 #include <map>
 #include <cstdarg>
-
+#include <json/reader.h>
+#include <fstream>
 
 //returns the value of a command line param. If not found, defvalue is returned
 bool getParamVal ( std::string param,std::map<std::string,std::string> const& args, bool defvalue ) {
@@ -169,5 +170,32 @@ namespace Camerasp
         fclose(fp);
       }
     }
+    JSONCPP_STRING readInputTestFile(const char* path)
+    {
+      std::ifstream ifs(path);
+      std::stringstream istr;
+      istr << ifs.rdbuf();
+      return istr.str();
+    }
+    Json::Value getDOM(std::string const& path)
+    {
+      JSONCPP_STRING input = readInputTestFile(path.c_str());
+      if (input.empty())
+      {
+        throw std::runtime_error("Empty input file");
+      }
 
+      Json::Features mode = Json::Features::strictMode();
+      mode.allowComments_ = true;
+      Json::Value root;
+
+      Json::Reader reader(mode);
+      bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
+      if (!parsingSuccessful)
+      {
+        throw std::runtime_error(
+          std::string("Failed to parse file: ") +
+          reader.getFormattedErrorMessages());
+      }
+    }
 }
