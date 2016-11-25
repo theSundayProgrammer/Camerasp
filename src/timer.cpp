@@ -70,8 +70,8 @@ namespace Camerasp {
             std::lock_guard<std::mutex> lock(imagebuffers[next].m);
             imagebuffers[next].buffer.swap(buffer);
           }
-          
-          fileCounter.compare_exchange_strong(maxFileCount, 0);
+          int tempMaxCount = maxFileCount;
+          fileCounter.compare_exchange_strong(tempMaxCount, 0);
           if (currentCount < maxSize) ++currentCount;
           Camerasp::curImg = next;
           console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());

@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <map>
 #include <iostream>
-
+#include <atomic>
 std::map<std::string, std::string>
 tokenize(std::string const& query)
 {
@@ -77,6 +77,17 @@ void Test_itoa(int k) {
 }
 
 int main() {
+  std::atomic<int> fileCount;
+  int maxval = 10;
+  int cmaxval = maxval;
+  for (int i = 0; i < 25; ++i) {
+    maxval = cmaxval;
+    printf("%d, %d\n", ++fileCount,maxval);
+    fileCount.compare_exchange_strong(maxval, 0);
+  }
+}
+
+int main2() {
   for (int k = 0; k < 1000; k += 13)
     Test_itoa(k);
 }
