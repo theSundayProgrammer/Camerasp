@@ -83,14 +83,15 @@ int main(int /* argc */, char* argv[]){
   unsigned short port_number(8088);
   raspicam::RaspiCam camera;
   try  {
-    std::string options;
-    errno_t err = Camerasp::readOptions(configPath + "options.txt", options);
-    if (err)     {
-      console->error("error in opening options file ");
-    }   else {
-      auto opts = Camerasp::tokenize(options);
-      console->info("Welcome to spdlog!");
-      Camerasp::processCommandLine(opts, camera);
+    console->info("Welcome to spdlog!");
+    Json::Value root = Camerasp::getDOM(configPath + "options.json");
+      Json::Value cameraConfig = root["Camera"];
+      if (cameraConfig.empty())
+      {
+        console->critical("Unable to read Json");
+        return 1;
+      }
+      Camerasp::processCommandLine(cameraConfig, camera);
       if (!camera.open()) {
         console->critical("Error opening camera");
         return -1;
@@ -151,7 +152,7 @@ int main(int /* argc */, char* argv[]){
       io_service.run();
       thread1.join();
       thread2.join();
-    }
+    
     
 
   }  catch (std::exception& e)  {

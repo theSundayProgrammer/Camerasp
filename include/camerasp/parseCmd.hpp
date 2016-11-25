@@ -21,10 +21,14 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 #include <chrono>
 #include <jpeg/jpgrdwr.h>
 #include <spdlog/spdlog.h>
+#include <json/reader.h>
 extern std::shared_ptr<spdlog::logger> console;
 
 namespace Camerasp{
   std::string lowerCase(std::string const& str);
+  void processCommandLine(
+    Json::Value const &,
+    raspicam::RaspiCam &Camera);
   void processCommandLine(
     std::map<std::string, 
     std::string> const & args, 
@@ -40,5 +44,5 @@ namespace Camerasp{
   void save_image(
     std::vector<unsigned char> const& buffer, 
     std::string const& fName);
-
+  Json::Value getDOM(std::string const& path);
 }

@@ -12,7 +12,7 @@
 #include <camerasp/parseCmd.hpp>
 #include <map>
 #include <cstdarg>
-#include <json/reader.h>
+
 #include <fstream>
 
 //returns the value of a command line param. If not found, defvalue is returned
@@ -21,26 +21,31 @@ bool getParamVal ( std::string param,std::map<std::string,std::string> const& ar
     auto it = args.find(param);
     if (it == end(args)) 
         return defvalue;
-    else
-    {
+    else    {
        
         return it->second == string("true");
     }
 }
 
-int getParamVal ( std::string param,std::map<std::string,std::string> const& args, int defvalue ) {
-    using namespace std;
-    using namespace std;
-    auto it = args.find(param);
-    if (it == end(args))
-      return defvalue;
-    else
-    {
-        int n = atoi(it->second.c_str());
-        console->info("{0} : {1}", param, n);
-        return n;
-    }
+int getParamVal(std::string param, std::map<std::string, std::string> const& args, int defvalue) {
+  using namespace std;
+  auto it = args.find(param);
+  if (it == end(args))
+    return defvalue;
+  else {
+    int n = atoi(it->second.c_str());
+    console->info("{0} : {1}", param, n);
+    return n;
+  }
 }
+
+int getParamVal(std::string param, Json::Value const& item, int defvalue) {
+  Json::Value nnType = item[param];
+  if (!nnType.empty())
+     return nnType.asInt();
+  else  
+    return  defvalue;
+  }
 
 
 raspicam::RASPICAM_EXPOSURE getExposureFromString (const  std::string& str ) {
@@ -96,7 +101,7 @@ namespace Camerasp
     Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
     auto it = nameVal.find("format");
-    raspicam::RASPICAM_FORMAT fmt= (it != end(nameVal)) ?
+    raspicam::RASPICAM_FORMAT fmt = (it != end(nameVal)) ?
       getFormatFromString(it->second) :
       raspicam::RASPICAM_FORMAT_RGB;
     Camera.setFormat(fmt);
@@ -112,7 +117,24 @@ namespace Camerasp
 
 
   }
-  
+  void processCommandLine(Json::Value const& nameVal, raspicam::RaspiCam &Camera) {
+    Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
+    Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
+    Camera.setBrightness(getParamVal("brightness", nameVal, 50));
+
+    Camera.setSharpness(getParamVal("sharpness", nameVal, 0));
+    Camera.setContrast(getParamVal("contrast", nameVal, 0));
+    Camera.setSaturation(getParamVal("saturation", nameVal, 0));
+    Camera.setShutterSpeed(getParamVal("shutterspeed", nameVal, 0));
+    Camera.setISO(getParamVal("iso", nameVal, 400));
+    Camera.setVideoStabilization( false); //todo: read from json
+    Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
+
+    raspicam::RASPICAM_FORMAT fmt =  raspicam::RASPICAM_FORMAT_RGB;
+    Camera.setFormat(fmt);
+
+  }
+
     std::string lowerCase(std::string const& str)
     {
       std::string retval(str);
@@ -177,11 +199,9 @@ namespace Camerasp
       istr << ifs.rdbuf();
       return istr.str();
     }
-    Json::Value getDOM(std::string const& path)
-    {
+    Json::Value getDOM(std::string const& path)    {
       JSONCPP_STRING input = readInputTestFile(path.c_str());
-      if (input.empty())
-      {
+      if (input.empty())      {
         throw std::runtime_error("Empty input file");
       }
 
@@ -191,11 +211,11 @@ namespace Camerasp
 
       Json::Reader reader(mode);
       bool parsingSuccessful = reader.parse(input.data(), input.data() + input.size(), root);
-      if (!parsingSuccessful)
-      {
+      if (!parsingSuccessful)      {
         throw std::runtime_error(
           std::string("Failed to parse file: ") +
           reader.getFormattedErrorMessages());
       }
+      return root;
     }
 }
