@@ -45,4 +45,8 @@ namespace Camerasp{
     std::vector<unsigned char> const& buffer, 
     std::string const& fName);
   Json::Value getDOM(std::string const& path);
+  extern std::chrono::seconds samplingPeriod;
+  extern int max_file_count;
+  extern std::string  pathname_prefix;
+
 }

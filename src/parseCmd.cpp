@@ -42,7 +42,11 @@ int getParamVal(std::string param, std::map<std::string, std::string> const& arg
 int getParamVal(std::string param, Json::Value const& item, int defvalue) {
   Json::Value nnType = item[param];
   if (!nnType.empty())
-     return nnType.asInt();
+  {
+    int n = nnType.asInt();
+    console->info("{0}={1}", param, n);
+    return n;
+  }
   else  
     return  defvalue;
   }

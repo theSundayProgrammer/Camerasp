@@ -5,9 +5,9 @@
     "width": 320
   },
   "Logging": {
-    "path": "C:\\Projects\\CPP\\Camerasp",
+    "path": "C:\\Projects\\CPP\\Camerasp\\logs",
     "count": 5,
-    "size": 20
+    "size": 2
   },
   "Data": {
     "path_prefix": "C:\\Users\\Public\\Pictures\\backup",

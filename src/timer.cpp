@@ -26,56 +26,70 @@ namespace Camerasp {
     std::vector<unsigned char> buffer;
   };
   static Imagebuffer imagebuffers[maxSize];
+  //cuurrenCount is used on startup to avoid a request for an unfilled buffer
   static std::atomic<int> currentCount(0);
-  static std::chrono::seconds samplingPeriod(3);
+  std::chrono::seconds samplingPeriod;
   int quitFlag=0;
-  static int firstTime = 0;
-  static int maxFileCount = 1000;
+  int max_file_count ;
   std::chrono::time_point<high_resolution_timer::clock_type> prev;
-  std::string const pathname_prefix = 
-#ifdef __GNUC__
-    "/home/pi/data/backup";
-#else
-   "C:\\Users\\Public\\Pictures\\Camerasp\\backUp";
-#endif
+  std::string  pathname_prefix;
+//#ifdef __GNUC__
+//    "/home/pi/data/backup";
+//#else
+//   "C:\\Users\\Public\\Pictures\\Camerasp\\backUp";
+//#endif
+  //need a better way of handling file save
+  static void save_file(std::vector<unsigned char>& buffer) {
+    //Ensure at any point in time only one instance of this function is running
+    int file_number = ++fileCounter;
+    if (file_number == max_file_count)
+      file_number = fileCounter = 0;
+    if (file_number % 3 == 0) {
+      char intstr[8];
+      sprintf(intstr, "%04d", file_number/3);
+      save_image(buffer, pathname_prefix + intstr + ".jpg");
+    }
+  }
+  static std::vector<unsigned char> grabPicture(raspicam::RaspiCam& camera_)  {
+    //At any point in time only one instance of this function will be running
+    Camerasp::ImgInfo info;
+    camera_.grab();
+    int siz = camera_.getImageBufferSize();
+    info.buffer.resize(siz);
+    camera_.retrieve((unsigned char*)(&info.buffer[0]));
+    info.image_height = camera_.getHeight();
+    console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
+    info.image_width = camera_.getWidth();
+    info.quality = 100;
+    info.row_stride = info.image_width * 3;
+    std::vector<unsigned char> buffer;
+    if (info.image_height > 0 && info.image_width > 0) {
+      info.quality = 100;
+      console->debug("Image Size = {0}", info.buffer.size());
+      buffer = write_JPEG_dat(info);
+    }
+    return buffer;
+  }
   void handle_timeout(
     const asio::error_code&,
     high_resolution_timer& timer,
     raspicam::RaspiCam& camera_) {
+    //At any point in time only one instance of this function will be running
     using namespace std::placeholders;
-      if (!quitFlag) {
-        auto current = high_resolution_timer::clock_type::now();
-        std::chrono::duration<double> diff = current - prev;
-        unsigned int next = (curImg + 1) % maxSize;
-        camera_.grab();
-        int siz = camera_.getImageBufferSize();
-        Camerasp::ImgInfo info;
-        info.buffer.resize(siz);
-        camera_.retrieve((unsigned char*)(&info.buffer[0]));
-        info.image_height = camera_.getHeight();
-        console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
-        info.image_width = camera_.getWidth();
-        info.quality = 100;
-        info.row_stride = info.image_width * 3;
-        std::vector<unsigned char> buffer;
-        if (info.image_height > 0 && info.image_width > 0) {
-          info.quality = 100;
-          console->debug("Image Size = {0}", info.buffer.size());
-          buffer = write_JPEG_dat(info);
-          char intstr[8];
-          //itoa(++fileCounter, intstr, 16);
-          sprintf(intstr,"%04d",++fileCounter);
-          save_image(buffer, pathname_prefix + intstr + ".jpg");
-          {
-            std::lock_guard<std::mutex> lock(imagebuffers[next].m);
-            imagebuffers[next].buffer.swap(buffer);
-          }
-          int tempMaxCount = maxFileCount;
-          fileCounter.compare_exchange_strong(tempMaxCount, 0);
-          if (currentCount < maxSize) ++currentCount;
-          Camerasp::curImg = next;
-          console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
-        }
+
+    if (!quitFlag) {
+      auto current = high_resolution_timer::clock_type::now();
+      std::chrono::duration<double> diff = current - prev;
+      unsigned int next = curImg;
+      auto buffer = grabPicture(camera_);
+      save_file(buffer);
+      {
+        std::lock_guard<std::mutex> lock(imagebuffers[next].m);
+        imagebuffers[next].buffer.swap(buffer);
+      }
+      if (currentCount < maxSize) ++currentCount;
+      curImg = (curImg+1) % maxSize;
+      console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
       timer.expires_at(prev + 2 * samplingPeriod);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));

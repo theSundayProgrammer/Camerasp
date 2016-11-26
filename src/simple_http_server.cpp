@@ -22,11 +22,11 @@
 #include <streambuf>
 #include <map>
 #include <camerasp/httpEventHandler.hpp>
+std::string logpath = "logs/camerasp";
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
 const std::string configPath="./";
-const std::string logpath = "logs/camerasp";
 #else
 #include <raspicam/raspicam_still.h>
 typedef int errno_t;
@@ -77,21 +77,32 @@ int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
   namespace spd = spdlog;
   std::string app_name(argv[0]);
-  console = spd::rotating_logger_mt("console", logpath, 1024*1024* 5, 3);
+  Json::Value root = Camerasp::getDOM(configPath + "options.json");
+  Json::Value log_config = root["Logging"];
+  Json::Value json_path = log_config["path"];
+  logpath = json_path.asString();
+  int size_mega_bytes = log_config["size"].asInt();
+  int count_files = log_config["count"].asInt();
+  console = spd::rotating_logger_mt("console", logpath, 1024*1024* size_mega_bytes, count_files);
+
+  Json::Value backup = root["Data"];
+  Camerasp::max_file_count = backup["count"].asInt();
+  int secs = backup["sample_period"].asInt();
+  Camerasp::samplingPeriod = std::chrono::seconds(secs);
+  Camerasp::pathname_prefix = backup["path_prefix"].asString();
   //console = spd::stdout_color_mt("console");
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
   raspicam::RaspiCam camera;
   try  {
     console->info("Welcome to spdlog!");
-    Json::Value root = Camerasp::getDOM(configPath + "options.json");
-      Json::Value cameraConfig = root["Camera"];
-      if (cameraConfig.empty())
+      Json::Value camera_config = root["Camera"];
+      if (camera_config.empty())
       {
         console->critical("Unable to read Json");
         return 1;
       }
-      Camerasp::processCommandLine(cameraConfig, camera);
+      Camerasp::processCommandLine(camera_config, camera);
       if (!camera.open()) {
         console->critical("Error opening camera");
         return -1;
