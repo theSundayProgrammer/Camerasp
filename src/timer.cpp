@@ -18,9 +18,10 @@
 
 namespace Camerasp {
   const unsigned int maxSize = 100;
+  std::atomic<int> pending_count;
   unsigned int curImg = 0;
   std::atomic<int> fileCounter;
-  
+  typedef std::vector<unsigned char> buffer_t;
   struct Imagebuffer {
     std::mutex m;
     std::vector<unsigned char> buffer;
@@ -39,16 +40,15 @@ namespace Camerasp {
 //   "C:\\Users\\Public\\Pictures\\Camerasp\\backUp";
 //#endif
   //need a better way of handling file save
-  static void save_file(std::vector<unsigned char>& buffer) {
-    //Ensure at any point in time only one instance of this function is running
-    int file_number = ++fileCounter;
-    if (file_number == max_file_count)
-      file_number = fileCounter = 0;
-    if (file_number % 3 == 0) {
+  static void save_file(int file_number) {
+    buffer_t buffer;
+      {
+        std::lock_guard<std::mutex> lock(imagebuffers[file_number].m);
+        buffer = imagebuffers[file_number].buffer;
+      }
       char intstr[8];
-      sprintf(intstr, "%04d", file_number/3);
+      sprintf(intstr, "%04d", file_number);
       save_image(buffer, pathname_prefix + intstr + ".jpg");
-    }
   }
   static std::vector<unsigned char> grabPicture(raspicam::RaspiCam& camera_)  {
     //At any point in time only one instance of this function will be running
@@ -63,6 +63,7 @@ namespace Camerasp {
     info.quality = 100;
     info.row_stride = info.image_width * 3;
     std::vector<unsigned char> buffer;
+
     if (info.image_height > 0 && info.image_width > 0) {
       info.quality = 100;
       console->debug("Image Size = {0}", info.buffer.size());
@@ -82,10 +83,18 @@ namespace Camerasp {
       std::chrono::duration<double> diff = current - prev;
       unsigned int next = curImg;
       auto buffer = grabPicture(camera_);
-      save_file(buffer);
       {
         std::lock_guard<std::mutex> lock(imagebuffers[next].m);
         imagebuffers[next].buffer.swap(buffer);
+      }
+      int files_in_queue = ++pending_count;
+      if (files_in_queue < maxSize / 10 || files_in_queue < 10)
+      {
+        asio::post(timer.get_io_context(), std::bind(save_file, next));
+      }
+      else
+      {
+        --pending_count;
       }
       if (currentCount < maxSize) ++currentCount;
       curImg = (curImg+1) % maxSize;
