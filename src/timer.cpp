@@ -49,6 +49,7 @@ namespace Camerasp {
       char intstr[8];
       sprintf(intstr, "%04d", file_number);
       save_image(buffer, pathname_prefix + intstr + ".jpg");
+      --pending_count;
   }
   static std::vector<unsigned char> grabPicture(raspicam::RaspiCam& camera_)  {
     //At any point in time only one instance of this function will be running
@@ -88,7 +89,7 @@ namespace Camerasp {
         imagebuffers[next].buffer.swap(buffer);
       }
       int files_in_queue = ++pending_count;
-      if (files_in_queue < maxSize / 10 || files_in_queue < 10)
+      if (files_in_queue < max_file_count / 10 || files_in_queue < 10)
       {
         asio::post(timer.get_io_context(), std::bind(save_file, next));
       }
