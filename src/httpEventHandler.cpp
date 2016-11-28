@@ -37,7 +37,7 @@ struct UrlParser {
 
   }
 };
- bool isinteger(const std::string & s, long* k)
+ bool isinteger(const std::string & s, int* k)
 {
   if (s.empty() || ((!isdigit(s[0])) && (s[0] != '-') && (s[0] != '+'))) return false;
 
@@ -67,7 +67,7 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
       //std::cout << url.command << std::endl;
       if (url.command == "img.jpg")
       {
-        long k=0;
+        int k=0;
         if (url.query_key == "prev") {
           if (url.query_value.empty() ||  !isinteger(url.query_value, &k)) {
             k = 0;
@@ -208,12 +208,13 @@ Handlers::Handlers(raspicam::RaspiCam& Camera) :
 
 
   std::pair<via::http::tx_response, std::string> 
-    Handlers::getGETResponse(long k)
+    Handlers::getGETResponse(int k)
   {
        // output the request
       via::http::tx_response response(via::http::response_status::code::OK);
       response.add_server_header();
       response.add_date_header();
+      console->info("image number={0}",k);
       response.add_header("Content-Type", "image/jpeg");
       std::string responsebody = Camerasp::getImage(k);
       response.add_content_length_header(responsebody.size());
