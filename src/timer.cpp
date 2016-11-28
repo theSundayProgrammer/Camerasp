@@ -126,6 +126,7 @@ namespace Camerasp {
     if (k > currentCount && currentCount < maxSize)
       k = currentCount - 1;
     unsigned int next = (curImg - k) % maxSize;
+    console->info("Image number = {0}", next);
     std::lock_guard<std::mutex> lock(imagebuffers[next].m);
     auto& imagebuffer = imagebuffers[next].buffer;
     return std::string(imagebuffer.begin(), imagebuffer.end());
