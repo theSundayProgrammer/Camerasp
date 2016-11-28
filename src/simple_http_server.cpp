@@ -22,7 +22,7 @@
 #include <streambuf>
 #include <map>
 #include <camerasp/httpEventHandler.hpp>
-std::string logpath = "logs/camerasp";
+std::string logpath;
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
@@ -31,7 +31,6 @@ const std::string configPath="./";
 #include <raspicam/raspicam_still.h>
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
-const std::string logpath = "/home/pi/logs/camerasp";
 #endif
 std::shared_ptr<spdlog::logger> console;
 
