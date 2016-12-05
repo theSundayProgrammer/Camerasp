@@ -22,17 +22,42 @@
 #include <streambuf>
 #include <map>
 #include <camerasp/httpEventHandler.hpp>
+#include <csignal>
 std::string logpath;
-#ifdef RASPICAM_MOCK
+std::shared_ptr<spdlog::logger> console;
+
+#ifdef _WIN32
 #include <camerasp/raspicamMock.hpp>
 #include <stdio.h>
 const std::string configPath="./";
+BOOL CtrlHandler(DWORD fdwCtrlType)
+{
+  switch (fdwCtrlType)
+  {
+    // Handle the CTRL-C signal. 
+  case CTRL_C_EVENT:
+  case CTRL_CLOSE_EVENT:
+    std::raise(SIGTERM);
+    return(TRUE);
+
+    // Pass other signals to the next handler. 
+  case CTRL_BREAK_EVENT:
+  case CTRL_LOGOFF_EVENT:
+  case CTRL_SHUTDOWN_EVENT:
+    return FALSE;
+
+  default:
+    return FALSE;
+}
+}
+
+
 #else
 #include <raspicam/raspicam_still.h>
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
 #endif
-std::shared_ptr<spdlog::logger> console;
+
 
 
   /// The stop callback function.
@@ -46,7 +71,6 @@ std::shared_ptr<spdlog::logger> console;
     console->info("shutting down ");
     http_server.shutdown();
   }
-
 
   /**
    * @brief get image from camera andreturn as jpeg
@@ -139,15 +163,15 @@ int main(int /* argc */, char* argv[]){
         return 1;
       }
 
-      // The signal set is used to register termination notifications
-      asio::signal_set signals_(io_service);
-#ifndef RASPICAM_MOCK
-      signals_.add(SIGINT);
+ #ifdef _WIN32
+      SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 #endif
+      asio::signal_set signals_(io_service);
+      signals_.add(SIGINT);
       signals_.add(SIGTERM);
-#if defined(SIGQUIT)
+      #ifndef _WIN32
       signals_.add(SIGQUIT);
-#endif // #if defined(SIGQUIT)
+      #endif
 
       // register the handle_stop callback
       signals_.async_wait([&]
