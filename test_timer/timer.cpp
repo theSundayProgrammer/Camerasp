@@ -10,9 +10,14 @@
 
 #include <asio.hpp>
 #include <ctime>
+#include <cassert>
+#include <csignal>
 #include <iostream>
-#include <chrono>
 #include <functional>
+#include <thread>
+#if 0
+#include <chrono>
+
 typedef asio::basic_waitable_timer<
     std::chrono::steady_clock>
   high_resolution_timer;
@@ -56,7 +61,7 @@ void handle_timeout(const asio::error_code&, high_resolution_timer& timer)
   }
 }
 
-int main()
+int main0()
 {
   using namespace std::placeholders;
   try
@@ -82,4 +87,49 @@ int main()
   }
 
   return 0;
+}
+#endif 
+
+
+int main()
+{
+  asio::io_service io_service;
+
+  // Prevent io_service from running out of work.
+  asio::io_service::work work(io_service);
+
+  // Boost.Asio will register an internal handler for SIGTERM.
+  asio::signal_set signal_set(io_service, SIGTERM);
+  signal_set.async_wait(
+    [&io_service](
+      const asio::error_code& error,
+      int signal_number)
+  {
+    std::cout << "Got signal " << signal_number << "; "
+      "stopping io_service." << std::endl;
+    io_service.stop();
+  });
+
+  // Raise SIGTERM.
+  std::raise(SIGTERM);
+
+  // By the time raise() returns, Boost.Asio has handled SIGTERM with its
+  // own internal handler, queuing it internally.  At this point, Boost.Asio
+  // is ready to dispatch this notification to a user signal handler
+  // (i.e. those provided to signal_set.async_wait()) within the
+  // io_service event loop.
+  std::cout << "io_service stopped? " << io_service.stopped() << std::endl;
+  assert(false == io_service.stopped());
+
+  // Initiate thread that will run the io_service.  This will invoke
+  // the queued handler that is ready for completion.
+  std::thread work_thread([&io_service]() { io_service.run(); });
+
+  // Synchornize on the work_thread.  Letting it run to completion.
+  work_thread.join();
+
+  // The io_service has been explicitly stopped in the async_wait
+  // handler.
+  std::cout << "io_service stopped? " << io_service.stopped() << std::endl;
+  assert(true == io_service.stopped());
 }
