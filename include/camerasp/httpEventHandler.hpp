@@ -64,7 +64,7 @@ public:
 
 private:
   
-  std::pair<via::http::tx_response, std::string> getGETResponse(long k);
+  std::pair<via::http::tx_response, std::string> getGETResponse(int k);
   
   raspicam::RaspiCam& camera_;
 };

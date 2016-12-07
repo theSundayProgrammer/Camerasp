@@ -99,7 +99,7 @@ namespace Camerasp {
       }
       if (currentCount < maxSize) ++currentCount;
       curImg = (curImg+1) % maxSize;
-      console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
+      //console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
       timer.expires_at(prev + 2 * samplingPeriod);
       prev = current;
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
@@ -125,7 +125,7 @@ namespace Camerasp {
 
     if (k > currentCount && currentCount < maxSize)
       k = currentCount - 1;
-    unsigned int next = (curImg - k) % maxSize;
+    int next = (curImg -1 - k) % maxSize;
     console->info("Image number = {0}", next);
     std::lock_guard<std::mutex> lock(imagebuffers[next].m);
     auto& imagebuffer = imagebuffers[next].buffer;
