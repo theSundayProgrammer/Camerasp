@@ -14,12 +14,11 @@ Install g++-x, the latest version of g++  as described below and modify the CXX 
 
 https://solarianprogrammer.com/2015/01/13/raspberry-pi-raspbian-install-gcc-compile-cpp-14-programs/
 
-clone the raspicam repository and use cmake to build Raspicam. Ensure that the IJL Jpeg libray  is installed.
+Ensure that the IJL Jpeg libray  is installed.
 To build run 'make' from the parent of 'src' directory.
 
 To install as a service on Raspian I used Jason Lewis' script except for the small change I suggested in https://github.com/jasonblewis/sample-service-script/issues/6.
 
-Another issue is with raspicam library. The application would not pick up the library even after the library was installed in  /usr/local/lib. So I had to creat libraspicam.conf and save it in /etc/ld.so.conf.d/.
 Go Figure!
 
 Copy options.txt to /srv/cameras/options.txt. This is the configuration file.  

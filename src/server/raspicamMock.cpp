@@ -4,31 +4,30 @@
 #include <camerasp/parseCmd.hpp>
 namespace raspicam
 {
-  RaspiCam::RaspiCam(void) { console->debug("RaspiCam"); }
-  RaspiCam::~RaspiCam(void) { console->debug("~RaspiCam"); }
-  void  RaspiCam::setFormat(enum RASPICAM_FORMAT) { console->debug("setFormat"); }
-  void  RaspiCam::setWidth(unsigned int w) { console->debug("setWidth: " "{0}" , w); width = w; }
-  void  RaspiCam::setHeight(unsigned int h) { console->debug("setHeight: " "{0}" , h); height = h; }
-  void  RaspiCam::setBrightness(unsigned int) { console->debug("setBrightness"); }
-  void  RaspiCam::setSharpness(int) { console->debug("setSharpness"); }
-  void  RaspiCam::setContrast(int) { console->debug("setContrast"); }
-  void  RaspiCam::setISO(int) { console->debug("setISO"); }
-  void  RaspiCam::setSaturation(int) { console->debug("setSaturation"); }
-  void  RaspiCam::setVideoStabilization(bool) { console->debug("setVideoStabilization"); }
-  void  RaspiCam::setExposureCompensation(int) { console->debug("setExposureCompensation"); }
-  void  RaspiCam::setExposure(enum RASPICAM_EXPOSURE) { console->debug("setExposure"); }
-  void  RaspiCam::setShutterSpeed(unsigned int) { console->debug("setShutterSpeed"); }
-  void  RaspiCam::setAWB(enum RASPICAM_AWB) { console->debug("setAWB"); }
-  void  RaspiCam::setAWB_RB(float, float) { console->debug("setAWB_RB"); }
-  void  RaspiCam::startCapture() { console->debug("startCapture"); }
-  void  RaspiCam::stopCapture() { console->debug("stopCapture"); }
-  void  RaspiCam::commitParameters() { console->debug("commitParameters"); }
-  unsigned int  RaspiCam::getImageBufferSize(void)const { console->debug("getImageBufferSize"); return 3 * this->height*this->width; }
-  unsigned int  RaspiCam::getWidth(void)const { console->debug("getWidth"); return width; }
-  unsigned int  RaspiCam::getHeight(void)const { console->debug("getHeight"); return height; }
-  void RaspiCam::retrieve(unsigned char *) { console->debug("retrieve"); }
-  bool RaspiCam::grab(void) { console->debug("grab"); return true; }
-  bool RaspiCam::open(bool) { console->debug("open"); return true; }
+  cam_still::cam_still(void) { console->debug("RaspiCam"); }
+  cam_still::~cam_still(void) { console->debug("~RaspiCam"); }
+  void  cam_still::setFormat(enum RASPICAM_FORMAT) { console->debug("setFormat"); }
+  void  cam_still::setWidth(unsigned int w) { console->debug("setWidth: " "{0}" , w); width = w; }
+  void  cam_still::setHeight(unsigned int h) { console->debug("setHeight: " "{0}" , h); height = h; }
+  void  cam_still::setBrightness(unsigned int) { console->debug("setBrightness"); }
+  void  cam_still::setSharpness(int) { console->debug("setSharpness"); }
+  void  cam_still::setContrast(int) { console->debug("setContrast"); }
+  void  cam_still::setISO(int) { console->debug("setISO"); }
+  void  cam_still::setSaturation(int) { console->debug("setSaturation"); }
+  void  cam_still::setVideoStabilization(bool) { console->debug("setVideoStabilization"); }
+  void  cam_still::setExposureCompensation(int) { console->debug("setExposureCompensation"); }
+  void  cam_still::setExposure(enum RASPICAM_EXPOSURE) { console->debug("setExposure"); }
+  void  cam_still::setShutterSpeed(unsigned int) { console->debug("setShutterSpeed"); }
+  void  cam_still::setAWB(enum RASPICAM_AWB) { console->debug("setAWB"); }
+  void  cam_still::setAWB_RB(float, float) { console->debug("setAWB_RB"); }
+  void  cam_still::startCapture() { console->debug("startCapture"); }
+  void  cam_still::stopCapture() { console->debug("stopCapture"); }
+  void  cam_still::commitParameters() { console->debug("commitParameters"); }
+  unsigned int  cam_still::getImageBufferSize(void)const { console->debug("getImageBufferSize"); return 3 * this->height*this->width; }
+  unsigned int  cam_still::getWidth(void)const { console->debug("getWidth"); return width; }
+  unsigned int  cam_still::getHeight(void)const { console->debug("getHeight"); return height; }
+  void cam_still::grab_retrieve(unsigned char *,unsigned int) { console->debug("retrieve"); }
+  bool cam_still::open(bool) { console->debug("open"); return true; }
 
 }
 namespace Camerasp{
