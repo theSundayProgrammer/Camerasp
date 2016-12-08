@@ -28,7 +28,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MMAL_UTIL_H
 #define MMAL_UTIL_H
 
-#include "mmal.h"
+#include <mmal/mmal.h>
 
 /** \defgroup MmalUtilities Utility functions
  * The utility functions provide helpers for common functionality that is not part

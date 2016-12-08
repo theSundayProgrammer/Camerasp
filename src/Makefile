@@ -16,7 +16,7 @@ objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
 camerasp: $(objs)
-	$(CXX)   -o $@ $^ -pthread  -ljpeg http/libvia-http.a -lraspicam
+	$(CXX)   -o $@ $^ -pthread -L/opt/vc/lib -ljpeg http/libvia-http.a -lmmal -lmmal_core -lmmal_util
 
 $(BUILD_DIR)/%.o: %.cpp
 	$(CXX) $(CXX_FLAGS) $(INCLUDES) $(OPTIONS) -MMD -MP -c $< -o $@

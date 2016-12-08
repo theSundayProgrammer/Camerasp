@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 VideoCore OS Abstraction Layer - pthreads types
 =============================================================================*/
 
-/* Do not include this file directly - instead include it via vcos/vcos.h */
+/* Do not include this file directly - instead include it via vcos.h */
 
 /** @file
   *
@@ -109,7 +109,7 @@ typedef struct VCOS_LLTHREAD_T
 #ifndef VCOS_USE_VCOS_FUTEX
 typedef pthread_mutex_t       VCOS_MUTEX_T;
 #else
-#include "vcos/vcos_futex_mutex.h"
+#include "vcos_futex_mutex.h"
 #endif /* VCOS_USE_VCOS_FUTEX */
 
 typedef struct
@@ -171,7 +171,7 @@ typedef struct VCOS_THREAD_T
 
    VCOS_UNSIGNED legacy;
    char name[16];                /**< Record the name of this thread, for diagnostics */
-   VCOS_UNSIGNED dummy;          /**< Dummy thread created for non-vcos/vcos created threads */
+   VCOS_UNSIGNED dummy;          /**< Dummy thread created for non-vcos created threads */
 
    /** Callback invoked at thread exit time */
    VCOS_THREAD_EXIT_T at_exit[VCOS_MAX_EXIT_HANDLERS];
@@ -211,27 +211,27 @@ typedef struct
 #define _VCOS_AFFINITY_MASK    0x300
 #define VCOS_CAN_SET_STACK_ADDR  0
 
-#define VCOS_TICKS_PER_SECOND _vcos/vcos_get_ticks_per_second()
+#define VCOS_TICKS_PER_SECOND _vcos_get_ticks_per_second()
 
 #include "vcos/generic/vcos_generic_event_flags.h"
 #include "vcos/generic/vcos_generic_blockpool.h"
 #include "vcos/generic/vcos_mem_from_malloc.h"
 
-/** Convert errno values into the values recognized by vcos/vcos */
-VCOSPRE_ VCOS_STATUS_T vcos/vcos_pthreads_map_error(int error);
-VCOSPRE_ VCOS_STATUS_T VCOSPOST_ vcos/vcos_pthreads_map_errno(void);
+/** Convert errno values into the values recognized by vcos */
+VCOSPRE_ VCOS_STATUS_T vcos_pthreads_map_error(int error);
+VCOSPRE_ VCOS_STATUS_T VCOSPOST_ vcos_pthreads_map_errno(void);
 
 /** Register a function to be called when the current thread exits.
   */
-extern VCOS_STATUS_T vcos/vcos_thread_at_exit(void (*pfn)(void*), void *cxt);
+extern VCOS_STATUS_T vcos_thread_at_exit(void (*pfn)(void*), void *cxt);
 
-extern uint32_t _vcos/vcos_get_ticks_per_second(void);
+extern uint32_t _vcos_get_ticks_per_second(void);
 
 /**
  * Set to 1 by default when ANDROID is defined. Allows runtime
  * switching for console apps.
  */
-extern int vcos/vcos_use_android_log;
+extern int vcos_use_android_log;
 
 typedef struct {
    VCOS_MUTEX_T mutex;
@@ -248,17 +248,17 @@ typedef struct {
  * Counted Semaphores
  */
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_semaphore_wait(VCOS_SEMAPHORE_T *sem) {
+VCOS_STATUS_T vcos_semaphore_wait(VCOS_SEMAPHORE_T *sem) {
    int ret;
    /* gdb causes sem_wait() to EINTR when a breakpoint is hit, retry here */
    while ((ret = sem_wait(sem)) == -1 && errno == EINTR)
       continue;
-   vcos/vcos_assert(ret==0);
+   vcos_assert(ret==0);
    return VCOS_SUCCESS;
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_semaphore_trywait(VCOS_SEMAPHORE_T *sem) {
+VCOS_STATUS_T vcos_semaphore_trywait(VCOS_SEMAPHORE_T *sem) {
    int ret;
    while ((ret = sem_trywait(sem)) == -1 && errno == EINTR)
       continue;
@@ -267,7 +267,7 @@ VCOS_STATUS_T vcos/vcos_semaphore_trywait(VCOS_SEMAPHORE_T *sem) {
    else if (errno == EAGAIN)
       return VCOS_EAGAIN;
    else {
-      vcos/vcos_assert(0);
+      vcos_assert(0);
       return VCOS_EINVAL;
    }
 }
@@ -277,7 +277,7 @@ VCOS_STATUS_T vcos/vcos_semaphore_trywait(VCOS_SEMAPHORE_T *sem) {
   *
   * Note that this function may not be implemented on all
   * platforms, and may not be efficient on all platforms
-  * (see comment in vcos/vcos_semaphore_wait)
+  * (see comment in vcos_semaphore_wait)
   *
   * Try to obtain the semaphore. If it is already taken, return
   * VCOS_EAGAIN.
@@ -291,7 +291,7 @@ VCOS_STATUS_T vcos/vcos_semaphore_trywait(VCOS_SEMAPHORE_T *sem) {
   *         parameters).
   */
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_semaphore_wait_timeout(VCOS_SEMAPHORE_T *sem, VCOS_UNSIGNED timeout) {
+VCOS_STATUS_T vcos_semaphore_wait_timeout(VCOS_SEMAPHORE_T *sem, VCOS_UNSIGNED timeout) {
    struct timespec ts;
    int ret;
    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
@@ -313,7 +313,7 @@ VCOS_STATUS_T vcos/vcos_semaphore_wait_timeout(VCOS_SEMAPHORE_T *sem, VCOS_UNSIG
          } else if (errno == ETIMEDOUT) {
             return VCOS_EAGAIN;
          } else {
-            vcos/vcos_assert(0);
+            vcos_assert(0);
             return VCOS_EINVAL;
          }
       }
@@ -321,26 +321,26 @@ VCOS_STATUS_T vcos/vcos_semaphore_wait_timeout(VCOS_SEMAPHORE_T *sem, VCOS_UNSIG
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_semaphore_create(VCOS_SEMAPHORE_T *sem,
+VCOS_STATUS_T vcos_semaphore_create(VCOS_SEMAPHORE_T *sem,
                                     const char *name,
                                     VCOS_UNSIGNED initial_count) {
    int rc = sem_init(sem, 0, initial_count);
    (void)name;
    if (rc != -1) return VCOS_SUCCESS;
-   else return vcos/vcos_pthreads_map_errno();
+   else return vcos_pthreads_map_errno();
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_semaphore_delete(VCOS_SEMAPHORE_T *sem) {
+void vcos_semaphore_delete(VCOS_SEMAPHORE_T *sem) {
    int rc = sem_destroy(sem);
-   vcos/vcos_assert(rc != -1);
+   vcos_assert(rc != -1);
    (void)rc;
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_semaphore_post(VCOS_SEMAPHORE_T *sem) {
+VCOS_STATUS_T vcos_semaphore_post(VCOS_SEMAPHORE_T *sem) {
    int rc = sem_post(sem);
-   vcos/vcos_assert(rc == 0);
+   vcos_assert(rc == 0);
    (void)rc;
    return VCOS_SUCCESS;
 }
@@ -352,22 +352,22 @@ VCOS_STATUS_T vcos/vcos_semaphore_post(VCOS_SEMAPHORE_T *sem) {
  ***********************************************************/
 
 
-extern VCOS_THREAD_T *vcos/vcos_dummy_thread_create(void);
-extern pthread_key_t _vcos/vcos_thread_current_key;
-extern uint64_t vcos/vcos_getmicrosecs64_internal(void);
+extern VCOS_THREAD_T *vcos_dummy_thread_create(void);
+extern pthread_key_t _vcos_thread_current_key;
+extern uint64_t vcos_getmicrosecs64_internal(void);
 
 VCOS_INLINE_IMPL
-uint32_t vcos/vcos_getmicrosecs(void) { return (uint32_t)vcos_getmicrosecs64_internal(); }
+uint32_t vcos_getmicrosecs(void) { return (uint32_t)vcos_getmicrosecs64_internal(); }
 
 VCOS_INLINE_IMPL
-uint64_t vcos/vcos_getmicrosecs64(void) { return vcos_getmicrosecs64_internal(); }
+uint64_t vcos_getmicrosecs64(void) { return vcos_getmicrosecs64_internal(); }
 
 VCOS_INLINE_IMPL
-VCOS_THREAD_T *vcos/vcos_thread_current(void) {
-   void *ret = pthread_getspecific(_vcos/vcos_thread_current_key);
+VCOS_THREAD_T *vcos_thread_current(void) {
+   void *ret = pthread_getspecific(_vcos_thread_current_key);
    if (ret == NULL)
    {
-      ret = vcos/vcos_dummy_thread_create();
+      ret = vcos_dummy_thread_create();
    }
 
 #ifdef __cplusplus
@@ -378,7 +378,7 @@ VCOS_THREAD_T *vcos/vcos_thread_current(void) {
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_sleep(uint32_t ms) {
+void vcos_sleep(uint32_t ms) {
    struct timespec ts;
    ts.tv_sec = ms/1000;
    ts.tv_nsec = ms % 1000 * (1000000);
@@ -386,67 +386,67 @@ void vcos/vcos_sleep(uint32_t ms) {
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_setstack(VCOS_THREAD_ATTR_T *attr, void *addr, VCOS_UNSIGNED sz) {
+void vcos_thread_attr_setstack(VCOS_THREAD_ATTR_T *attr, void *addr, VCOS_UNSIGNED sz) {
    attr->ta_stackaddr = addr;
    attr->ta_stacksz = sz;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_setstacksize(VCOS_THREAD_ATTR_T *attr, VCOS_UNSIGNED sz) {
+void vcos_thread_attr_setstacksize(VCOS_THREAD_ATTR_T *attr, VCOS_UNSIGNED sz) {
    attr->ta_stacksz = sz;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_setpriority(VCOS_THREAD_ATTR_T *attr, VCOS_UNSIGNED pri) {
+void vcos_thread_attr_setpriority(VCOS_THREAD_ATTR_T *attr, VCOS_UNSIGNED pri) {
    (void)attr;
    (void)pri;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_set_priority(VCOS_THREAD_T *thread, VCOS_UNSIGNED p) {
+void vcos_thread_set_priority(VCOS_THREAD_T *thread, VCOS_UNSIGNED p) {
    /* not implemented */
    (void)thread;
    (void)p;
 }
 
 VCOS_INLINE_IMPL
-VCOS_UNSIGNED vcos/vcos_thread_get_priority(VCOS_THREAD_T *thread) {
+VCOS_UNSIGNED vcos_thread_get_priority(VCOS_THREAD_T *thread) {
    /* not implemented */
    (void)thread;
    return 0;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_set_affinity(VCOS_THREAD_T *thread, VCOS_UNSIGNED affinity) {
+void vcos_thread_set_affinity(VCOS_THREAD_T *thread, VCOS_UNSIGNED affinity) {
    /* not implemented */
-   vcos/vcos_unused(thread);
-   vcos/vcos_unused(affinity);
+   vcos_unused(thread);
+   vcos_unused(affinity);
 }
 
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_setaffinity(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED affinity) {
+void vcos_thread_attr_setaffinity(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED affinity) {
    attrs->ta_affinity = affinity;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_settimeslice(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED ts) {
+void vcos_thread_attr_settimeslice(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED ts) {
    attrs->ta_timeslice = ts;
 }
 
 VCOS_INLINE_IMPL
-void _vcos/vcos_thread_attr_setlegacyapi(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED legacy) {
+void _vcos_thread_attr_setlegacyapi(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED legacy) {
    attrs->legacy = legacy;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_thread_attr_setautostart(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED autostart) {
+void vcos_thread_attr_setautostart(VCOS_THREAD_ATTR_T *attrs, VCOS_UNSIGNED autostart) {
    (void)attrs;
    (void)autostart;
 }
 
 VCOS_INLINE_IMPL
-VCOS_LLTHREAD_T *vcos/vcos_llthread_current(void) {
+VCOS_LLTHREAD_T *vcos_llthread_current(void) {
    return (VCOS_LLTHREAD_T *)pthread_self();
 }
 
@@ -457,37 +457,37 @@ VCOS_LLTHREAD_T *vcos/vcos_llthread_current(void) {
 #ifndef VCOS_USE_VCOS_FUTEX
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_mutex_create(VCOS_MUTEX_T *latch, const char *name) {
+VCOS_STATUS_T vcos_mutex_create(VCOS_MUTEX_T *latch, const char *name) {
    int rc = pthread_mutex_init(latch, NULL);
    (void)name;
    if (rc == 0) return VCOS_SUCCESS;
-   else return vcos/vcos_pthreads_map_errno();
+   else return vcos_pthreads_map_errno();
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_mutex_delete(VCOS_MUTEX_T *latch) {
+void vcos_mutex_delete(VCOS_MUTEX_T *latch) {
    int rc = pthread_mutex_destroy(latch);
    (void)rc;
-   vcos/vcos_assert(rc==0);
+   vcos_assert(rc==0);
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_mutex_lock(VCOS_MUTEX_T *latch) {
+VCOS_STATUS_T vcos_mutex_lock(VCOS_MUTEX_T *latch) {
    int rc = pthread_mutex_lock(latch);
-   vcos/vcos_assert(rc==0);
+   vcos_assert(rc==0);
    (void)rc;
    return VCOS_SUCCESS;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_mutex_unlock(VCOS_MUTEX_T *latch) {
+void vcos_mutex_unlock(VCOS_MUTEX_T *latch) {
    int rc = pthread_mutex_unlock(latch);
    (void)rc;
-   vcos/vcos_assert(rc==0);
+   vcos_assert(rc==0);
 }
 
 VCOS_INLINE_IMPL
-int vcos/vcos_mutex_is_locked(VCOS_MUTEX_T *m) {
+int vcos_mutex_is_locked(VCOS_MUTEX_T *m) {
    int rc = pthread_mutex_trylock(m);
    if (rc == 0) {
       pthread_mutex_unlock(m);
@@ -500,7 +500,7 @@ int vcos/vcos_mutex_is_locked(VCOS_MUTEX_T *m) {
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_mutex_trylock(VCOS_MUTEX_T *m) {
+VCOS_STATUS_T vcos_mutex_trylock(VCOS_MUTEX_T *m) {
    int rc = pthread_mutex_trylock(m);
    (void)rc;
    return (rc == 0) ? VCOS_SUCCESS : VCOS_EAGAIN;
@@ -513,14 +513,14 @@ VCOS_STATUS_T vcos/vcos_mutex_trylock(VCOS_MUTEX_T *m) {
  */
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_event_create(VCOS_EVENT_T *event, const char *debug_name)
+VCOS_STATUS_T vcos_event_create(VCOS_EVENT_T *event, const char *debug_name)
 {
    VCOS_STATUS_T status;
 
    int rc = sem_init(&event->sem, 0, 0);
-   if (rc != 0) return vcos/vcos_pthreads_map_errno();
+   if (rc != 0) return vcos_pthreads_map_errno();
 
-   status = vcos/vcos_mutex_create(&event->mutex, debug_name);
+   status = vcos_mutex_create(&event->mutex, debug_name);
    if (status != VCOS_SUCCESS) {
       sem_destroy(&event->sem);
       return status;
@@ -530,14 +530,14 @@ VCOS_STATUS_T vcos/vcos_event_create(VCOS_EVENT_T *event, const char *debug_name
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_event_signal(VCOS_EVENT_T *event)
+void vcos_event_signal(VCOS_EVENT_T *event)
 {
   #if VCOS_ASSERT_ENABLED
    int ok = 0;
    #endif
    int value;
 
-   if (vcos/vcos_mutex_lock(&event->mutex) != VCOS_SUCCESS)
+   if (vcos_mutex_lock(&event->mutex) != VCOS_SUCCESS)
       goto fail_mtx;
 
    if (sem_getvalue(&event->sem, &value) != 0)
@@ -550,24 +550,24 @@ void vcos/vcos_event_signal(VCOS_EVENT_T *event)
    ok = 1;
    #endif
 fail_sem:
-   vcos/vcos_mutex_unlock(&event->mutex);
+   vcos_mutex_unlock(&event->mutex);
 fail_mtx:
-   vcos/vcos_assert(ok);
+   vcos_assert(ok);
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_event_wait(VCOS_EVENT_T *event)
+VCOS_STATUS_T vcos_event_wait(VCOS_EVENT_T *event)
 {
    int ret;
    /* gdb causes sem_wait() to EINTR when a breakpoint is hit, retry here */
    while ((ret = sem_wait(&event->sem)) == -1 && errno == EINTR)
       continue;
-   vcos/vcos_assert(ret==0);
+   vcos_assert(ret==0);
    return ret == 0 ? VCOS_SUCCESS : (VCOS_STATUS_T)errno;
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_event_try(VCOS_EVENT_T *event)
+VCOS_STATUS_T vcos_event_try(VCOS_EVENT_T *event)
 {
    int ret;
    while ((ret = sem_trywait(&event->sem)) == -1 && errno == EINTR)
@@ -580,66 +580,66 @@ VCOS_STATUS_T vcos/vcos_event_try(VCOS_EVENT_T *event)
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_event_delete(VCOS_EVENT_T *event)
+void vcos_event_delete(VCOS_EVENT_T *event)
 {
    int rc = sem_destroy(&event->sem);
-   vcos/vcos_assert(rc != -1);
+   vcos_assert(rc != -1);
    (void)rc;
 
-   vcos/vcos_mutex_delete(&event->mutex);
+   vcos_mutex_delete(&event->mutex);
 }
 
 VCOS_INLINE_IMPL
-VCOS_UNSIGNED vcos/vcos_process_id_current(void) {
+VCOS_UNSIGNED vcos_process_id_current(void) {
    return (VCOS_UNSIGNED) getpid();
 }
 
 VCOS_INLINE_IMPL
-int vcos/vcos_strcasecmp(const char *s1, const char *s2) {
+int vcos_strcasecmp(const char *s1, const char *s2) {
    return strcasecmp(s1,s2);
 }
 
 VCOS_INLINE_IMPL
-int vcos/vcos_strncasecmp(const char *s1, const char *s2, size_t n) {
+int vcos_strncasecmp(const char *s1, const char *s2, size_t n) {
    return strncasecmp(s1,s2,n);
 }
 
 VCOS_INLINE_IMPL
-int vcos/vcos_in_interrupt(void) {
+int vcos_in_interrupt(void) {
    return 0;
 }
 
 /* For support event groups - per thread semaphore */
 VCOS_INLINE_IMPL
-void _vcos/vcos_thread_sem_wait(void) {
-   VCOS_THREAD_T *t = vcos/vcos_thread_current();
-   vcos/vcos_semaphore_wait(&t->suspend);
+void _vcos_thread_sem_wait(void) {
+   VCOS_THREAD_T *t = vcos_thread_current();
+   vcos_semaphore_wait(&t->suspend);
 }
 
 VCOS_INLINE_IMPL
-void _vcos/vcos_thread_sem_post(VCOS_THREAD_T *target) {
-   vcos/vcos_semaphore_post(&target->suspend);
+void _vcos_thread_sem_post(VCOS_THREAD_T *target) {
+   vcos_semaphore_post(&target->suspend);
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_tls_create(VCOS_TLS_KEY_T *key) {
+VCOS_STATUS_T vcos_tls_create(VCOS_TLS_KEY_T *key) {
    int st = pthread_key_create(key, NULL);
    return st == 0 ? VCOS_SUCCESS: VCOS_ENOMEM;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_tls_delete(VCOS_TLS_KEY_T tls) {
+void vcos_tls_delete(VCOS_TLS_KEY_T tls) {
    pthread_key_delete(tls);
 }
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_tls_set(VCOS_TLS_KEY_T tls, void *v) {
+VCOS_STATUS_T vcos_tls_set(VCOS_TLS_KEY_T tls, void *v) {
    pthread_setspecific(tls, v);
    return VCOS_SUCCESS;
 }
 
 VCOS_INLINE_IMPL
-void *vcos/vcos_tls_get(VCOS_TLS_KEY_T tls) {
+void *vcos_tls_get(VCOS_TLS_KEY_T tls) {
    return pthread_getspecific(tls);
 }
 
@@ -652,35 +652,35 @@ void *vcos/vcos_tls_get(VCOS_TLS_KEY_T tls) {
 /* TODO implement properly... */
 
 VCOS_INLINE_IMPL
-VCOS_STATUS_T vcos/vcos_atomic_flags_create(VCOS_ATOMIC_FLAGS_T *atomic_flags)
+VCOS_STATUS_T vcos_atomic_flags_create(VCOS_ATOMIC_FLAGS_T *atomic_flags)
 {
    atomic_flags->flags = 0;
-   return vcos/vcos_mutex_create(&atomic_flags->mutex, "VCOS_ATOMIC_FLAGS_T");
+   return vcos_mutex_create(&atomic_flags->mutex, "VCOS_ATOMIC_FLAGS_T");
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_atomic_flags_or(VCOS_ATOMIC_FLAGS_T *atomic_flags, uint32_t flags)
+void vcos_atomic_flags_or(VCOS_ATOMIC_FLAGS_T *atomic_flags, uint32_t flags)
 {
-   vcos/vcos_mutex_lock(&atomic_flags->mutex);
+   vcos_mutex_lock(&atomic_flags->mutex);
    atomic_flags->flags |= flags;
-   vcos/vcos_mutex_unlock(&atomic_flags->mutex);
+   vcos_mutex_unlock(&atomic_flags->mutex);
 }
 
 VCOS_INLINE_IMPL
-uint32_t vcos/vcos_atomic_flags_get_and_clear(VCOS_ATOMIC_FLAGS_T *atomic_flags)
+uint32_t vcos_atomic_flags_get_and_clear(VCOS_ATOMIC_FLAGS_T *atomic_flags)
 {
    uint32_t flags;
-   vcos/vcos_mutex_lock(&atomic_flags->mutex);
+   vcos_mutex_lock(&atomic_flags->mutex);
    flags = atomic_flags->flags;
    atomic_flags->flags = 0;
-   vcos/vcos_mutex_unlock(&atomic_flags->mutex);
+   vcos_mutex_unlock(&atomic_flags->mutex);
    return flags;
 }
 
 VCOS_INLINE_IMPL
-void vcos/vcos_atomic_flags_delete(VCOS_ATOMIC_FLAGS_T *atomic_flags)
+void vcos_atomic_flags_delete(VCOS_ATOMIC_FLAGS_T *atomic_flags)
 {
-   vcos/vcos_mutex_delete(&atomic_flags->mutex);
+   vcos_mutex_delete(&atomic_flags->mutex);
 }
 
 #endif
@@ -690,21 +690,21 @@ void vcos/vcos_atomic_flags_delete(VCOS_ATOMIC_FLAGS_T *atomic_flags)
 /* not exactly the free memory, but a measure of it */
 
 VCOS_INLINE_IMPL
-unsigned long vcos/vcos_get_free_mem(void) {
+unsigned long vcos_get_free_mem(void) {
    return (unsigned long)sbrk(0);
 }
 
 #endif
 
 #ifdef VCOS_PTHREADS_WANT_HISR_EMULATION
-VCOS_STATUS_T vcos/vcos_legacy_hisr_create(VCOS_HISR_T *hisr, const char *name,
+VCOS_STATUS_T vcos_legacy_hisr_create(VCOS_HISR_T *hisr, const char *name,
                                       void (*entry)(void),
                                       VCOS_UNSIGNED pri,
                                       void *stack, VCOS_UNSIGNED stack_size);
 
-void vcos/vcos_legacy_hisr_activate(VCOS_HISR_T *hisr);
+void vcos_legacy_hisr_activate(VCOS_HISR_T *hisr);
 
-void vcos/vcos_legacy_hisr_delete(VCOS_HISR_T *hisr);
+void vcos_legacy_hisr_delete(VCOS_HISR_T *hisr);
 
 #endif
 
@@ -716,11 +716,11 @@ void vcos/vcos_legacy_hisr_delete(VCOS_HISR_T *hisr);
 #define  vcos_log_platform_init()   _vcos_log_platform_init()
 VCOSPRE_ void VCOSPOST_             _vcos_log_platform_init(void);
 
-VCOS_INLINE_DECL void _vcos/vcos_thread_sem_wait(void);
-VCOS_INLINE_DECL void _vcos/vcos_thread_sem_post(VCOS_THREAD_T *);
+VCOS_INLINE_DECL void _vcos_thread_sem_wait(void);
+VCOS_INLINE_DECL void _vcos_thread_sem_post(VCOS_THREAD_T *);
 
-#define VCOS_APPLICATION_ARGC          vcos/vcos_get_argc()
-#define VCOS_APPLICATION_ARGV          vcos/vcos_get_argv()
+#define VCOS_APPLICATION_ARGC          vcos_get_argc()
+#define VCOS_APPLICATION_ARGV          vcos_get_argv()
 
 #include <vcos/generic/vcos_generic_reentrant_mtx.h>
 #include <vcos/generic/vcos_generic_named_sem.h>
@@ -730,7 +730,7 @@ VCOS_INLINE_DECL void _vcos/vcos_thread_sem_post(VCOS_THREAD_T *);
 #define _VCOS_LOG_LEVEL() getenv("VC_LOGLEVEL")
 
 VCOS_STATIC_INLINE
-char *vcos/vcos_strdup(const char *str)
+char *vcos_strdup(const char *str)
 {
    return strdup(str);
 }

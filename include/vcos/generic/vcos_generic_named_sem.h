@@ -36,7 +36,7 @@ VideoCore OS Abstraction Layer - named semaphores
 extern "C" {
 #endif
 
-#include "vcos_types.h"
+#include <vcos/vcos_types.h>
 
 /**
  * \file

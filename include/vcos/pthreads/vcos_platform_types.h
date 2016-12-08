@@ -56,9 +56,9 @@ extern "C" {
 #define VCOS_ASSERT_LOGGING_DISABLE 0
 
 extern void
-vcos/vcos_pthreads_logging_assert(const char *file, const char *func, unsigned int line, const char *fmt, ...);
+vcos_pthreads_logging_assert(const char *file, const char *func, unsigned int line, const char *fmt, ...);
 
-#define VCOS_ASSERT_MSG(...) ((VCOS_ASSERT_LOGGING && !VCOS_ASSERT_LOGGING_DISABLE) ? vcos/vcos_pthreads_logging_assert(__FILE__, __func__, __LINE__, __VA_ARGS__) : (void)0)
+#define VCOS_ASSERT_MSG(...) ((VCOS_ASSERT_LOGGING && !VCOS_ASSERT_LOGGING_DISABLE) ? vcos_pthreads_logging_assert(__FILE__, __func__, __LINE__, __VA_ARGS__) : (void)0)
 
 #define VCOS_INLINE_BODIES
 #define VCOS_INLINE_DECL extern __inline__

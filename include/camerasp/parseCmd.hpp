@@ -10,7 +10,7 @@
 #ifdef RASPICAM_MOCK
 #include "raspicamMock.hpp"
 #else
-#include <raspicam/raspicam.h>
+#include <raspicam/cam_still.hpp>
 #endif
 #include <map>
 #ifdef __GNUC__
@@ -28,17 +28,17 @@ namespace Camerasp{
   std::string lowerCase(std::string const& str);
   void processCommandLine(
     Json::Value const &,
-    raspicam::RaspiCam &Camera);
+    raspicam::cam_still &Camera);
   void processCommandLine(
     std::map<std::string, 
     std::string> const & args, 
-    raspicam::RaspiCam &Camera);
+    raspicam::cam_still &Camera);
   std::map<std::string, std::string>   tokenize(std::string const& query);
   errno_t readOptions(std::string const& fileName, std::string& options);
   typedef asio::basic_waitable_timer<
     std::chrono::steady_clock>
     high_resolution_timer;
-  void setTimer(high_resolution_timer& timer,raspicam::RaspiCam&);
+  void setTimer(high_resolution_timer& timer,raspicam::cam_still&);
   std::string getImage(int k);
   void stopCapture();
   void save_image(

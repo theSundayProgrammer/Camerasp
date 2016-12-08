@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef MMAL_CLOCK_H
 #define MMAL_CLOCK_H
 
-#include "vcos/vcos/vcos.h"
+#include <vcos/vcos.h>
 #include "mmal_types.h"
 #include "mmal_common.h"
 #include <cassert>

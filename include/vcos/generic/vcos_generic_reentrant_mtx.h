@@ -36,7 +36,7 @@ VideoCore OS Abstraction Layer - reentrant mutexes created from regular ones.
 extern "C" {
 #endif
 
-#include "vcos_types.h"
+#include <vcos/vcos_types.h>
 
 /**
  * \file
