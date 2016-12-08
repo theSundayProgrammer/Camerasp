@@ -1,0 +1,21 @@
+// Configuration options
+{
+  "Camera": {
+    "height": 240,
+    "width": 320
+  },
+  "Logging": {
+    "path": "/home/pi/logs/camerasp",
+    "count": 5,
+    "size": 20
+  },
+  "Data": {
+    "path_prefix": "/home/pi/data/backup",
+    "sample_period": 1,
+	"count": 1000
+
+  }
+}
+
+
+    
