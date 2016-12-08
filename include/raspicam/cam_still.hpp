@@ -103,12 +103,10 @@ namespace raspicam {
 
 	    bool _isInitialized;
             public:
-            const char * API_NAME;
             ~cam_still() {
                release();
                }
             cam_still() {
-                API_NAME = "raspicam_still";
                 setDefaults();
                 camera = NULL;
                 encoder = NULL;

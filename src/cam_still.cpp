@@ -41,9 +41,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mmal/util/mmal_default_components.h>
 #include <mmal/util/mmal_util.h>
 #include <mmal/util/mmal_util_params.h>
-#include <iostream>
 #include <semaphore.h>
 using namespace std;
+#define API_NAME  "raspicam_still"
 namespace raspicam {
         typedef struct {
             cam_still * cameraBoard;
@@ -75,7 +75,7 @@ namespace raspicam {
                 mmal_buffer_header_mem_lock ( buffer );
                 for ( unsigned int i = 0; i < buffer->length; i++, userdata->bufferPosition++ ) {
                     if ( userdata->offset >= userdata->length ) {
-                        cout << userdata->cameraBoard->API_NAME << ": Buffer provided was too small! Failed to copy data into buffer.\n";
+                      console->critical( std::string(userdata->cameraBoard->API_NAME) + ": Buffer provided was too small! Failed to copy data into buffer.");
                         userdata->cameraBoard = NULL;
                         break;
                     } else {
@@ -156,17 +156,17 @@ namespace raspicam {
             commitFlips();
             // Set Video Stabilization
             if ( mmal_port_parameter_set_boolean ( camera->control, MMAL_PARAMETER_VIDEO_STABILISATION, 0 ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set video stabilization parameter.\n";
+                console->critical( API_NAME  ": Failed to set video stabilization parameter.");
             // Set Exposure Compensation
             if ( mmal_port_parameter_set_int32 ( camera->control, MMAL_PARAMETER_EXPOSURE_COMP , 0 ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set exposure compensation parameter.\n";
+                console->critical( API_NAME  ": Failed to set exposure compensation parameter.");
             // Set Color Efects
             MMAL_PARAMETER_COLOURFX_T colfx = {{MMAL_PARAMETER_COLOUR_EFFECT,sizeof ( colfx ) }, 0, 0, 0};
             colfx.enable = 0;
             colfx.u = 128;
             colfx.v = 128;
             if ( mmal_port_parameter_set ( camera->control, &colfx.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set color effects parameter.\n";
+                console->critical( API_NAME  ": Failed to set color effects parameter.");
             // Set ROI
             MMAL_PARAMETER_INPUT_CROP_T crop = {{MMAL_PARAMETER_INPUT_CROP, sizeof ( MMAL_PARAMETER_INPUT_CROP_T ) },{0,0,0,0}};
             crop.rect.x = ( 65536 * 0 );
@@ -174,7 +174,7 @@ namespace raspicam {
             crop.rect.width = ( 65536 * 1 );
             crop.rect.height = ( 65536 * 1 );
             if ( mmal_port_parameter_set ( camera->control, &crop.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set ROI parameter.\n";
+                console->critical( API_NAME  ": Failed to set ROI parameter.");
             // Set encoder encoding
             if ( encoder_output_port != NULL ) {
                 encoder_output_port->format->encoding = convertEncoding ( encoding );
@@ -196,13 +196,13 @@ namespace raspicam {
 
         int cam_still::createCamera() {
             if ( mmal_component_create ( MMAL_COMPONENT_DEFAULT_CAMERA, &camera ) ) {
-                cout << API_NAME << ": Failed to create camera component.\n";
+                console->critical( API_NAME  ": Failed to create camera component.");
                 destroyCamera();
                 return -1;
             }
 
             if ( !camera->output_num ) {
-                cout << API_NAME << ": Camera does not have output ports!\n";
+                console->critical( API_NAME  ": Camera does not have output ports!);
                 destroyCamera();
                 return -1;
             }
@@ -211,7 +211,7 @@ namespace raspicam {
 
             // Enable the camera, and tell it its control callback function
             if ( mmal_port_enable ( camera->control, control_callback ) ) {
-                cout << API_NAME << ": Could not enable control port.\n";
+                console->critical( API_NAME  ": Could not enable control port.");
                 destroyCamera();
                 return -1;
             }
@@ -230,7 +230,7 @@ namespace raspicam {
                 MMAL_PARAM_TIMESTAMP_MODE_RESET_STC // use_stc_timestamp
             };
             if ( mmal_port_parameter_set ( camera->control, &camConfig.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Could not set port parameters.\n";
+                console->critical( API_NAME  ": Could not set port parameters.");
 
             commitParameters();
 
@@ -251,19 +251,19 @@ namespace raspicam {
             camera_still_port->buffer_num = camera_still_port->buffer_num_recommended;
 
             if ( mmal_port_format_commit ( camera_still_port ) ) {
-                cout << API_NAME << ": Camera still format could not be set.\n";
+                console->critical( API_NAME  ": Camera still format could not be set.");
                 destroyCamera();
                 return -1;
             }
 
             if ( mmal_component_enable ( camera ) ) {
-                cout << API_NAME << ": Camera component could not be enabled.\n";
+                console->critical( API_NAME  ": Camera component could not be enabled.");
                 destroyCamera();
                 return -1;
             }
 
             if ( ! ( encoder_pool = mmal_port_pool_create ( camera_still_port, camera_still_port->buffer_num, camera_still_port->buffer_size ) ) ) {
-                cout << API_NAME << ": Failed to create buffer header pool for camera.\n";
+                console->critical( API_NAME  ": Failed to create buffer header pool for camera.");
                 destroyCamera();
                 return -1;
             }
@@ -273,12 +273,12 @@ namespace raspicam {
 
         int cam_still::createEncoder() {
             if ( mmal_component_create ( MMAL_COMPONENT_DEFAULT_IMAGE_ENCODER, &encoder ) ) {
-                cout << API_NAME << ": Could not create encoder component.\n";
+                console->critical( API_NAME  ": Could not create encoder component.");
                 destroyEncoder();
                 return -1;
             }
             if ( !encoder->input_num || !encoder->output_num ) {
-                cout << API_NAME << ": Encoder does not have input/output ports.\n";
+                console->critical( API_NAME  ": Encoder does not have input/output ports.");
                 destroyEncoder();
                 return -1;
             }
@@ -296,17 +296,17 @@ namespace raspicam {
                 encoder_output_port->buffer_num = encoder_output_port->buffer_num_min;
 
             if ( mmal_port_format_commit ( encoder_output_port ) ) {
-                cout << API_NAME << ": Could not set format on encoder output port.\n";
+                console->critical( API_NAME  ": Could not set format on encoder output port.");
                 destroyEncoder();
                 return -1;
             }
             if ( mmal_component_enable ( encoder ) ) {
-                cout << API_NAME << ": Could not enable encoder component.\n";
+                console->critical( API_NAME  ": Could not enable encoder component.");
                 destroyEncoder();
                 return -1;
             }
             if ( ! ( encoder_pool = mmal_port_pool_create ( encoder_output_port, encoder_output_port->buffer_num, encoder_output_port->buffer_size ) ) ) {
-                cout << API_NAME << ": Failed to create buffer header pool for encoder output port.\n";
+                console->critical( API_NAME  ": Failed to create buffer header pool for encoder output port.");
                 destroyEncoder();
                 return -1;
             }
@@ -341,11 +341,11 @@ namespace raspicam {
         int cam_still::initialize() {
             if ( _isInitialized ) return 0;
             if ( createCamera() ) {
-                cout << API_NAME << ": Failed to create camera component.\n";
+                console->critical( API_NAME  ": Failed to create camera component.");
                 destroyCamera();
                 return -1;
             } else if ( createEncoder() ) {
-                cout << API_NAME << ": Failed to create encoder component.\n";
+                console->critical( API_NAME  ": Failed to create encoder component.");
                 destroyCamera();
                 return -1;
             } else {
@@ -353,7 +353,7 @@ namespace raspicam {
                 encoder_input_port  = encoder->input[0];
                 encoder_output_port = encoder->output[0];
                 if ( connectPorts ( camera_still_port, encoder_input_port, &encoder_connection ) != MMAL_SUCCESS ) {
-                    cout << "ERROR: Could not connect encoder ports!\n";
+                  console->critical("ERROR: Could not connect encoder ports!);
                     return -1;
                 }
             }
@@ -366,26 +366,24 @@ namespace raspicam {
             int ret = 0;
             sem_t mutex;
             sem_init ( &mutex, 0, 0 );
-            RASPICAM_USERDATA * userdata = new RASPICAM_USERDATA();
-            userdata->cameraBoard = this;
-            userdata->encoderPool = encoder_pool;
-            userdata->mutex = &mutex;
-            userdata->data = preallocated_data;
-            userdata->bufferPosition = 0;
-            userdata->offset = 0;
-            userdata->startingOffset = 0;
-            userdata->length = length;
-            userdata->imageCallback = NULL;
-            encoder_output_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) userdata;
-            if ( ( ret = startCapture() ) != 0 ) {
-                delete userdata;
-                return false;
+            RASPICAM_USERDATA  userdata ;
+            userdata.cameraBoard = this;
+            userdata.encoderPool = encoder_pool;
+            userdata.mutex = &mutex;
+            userdata.data = preallocated_data;
+            userdata.bufferPosition = 0;
+            userdata.offset = 0;
+            userdata.startingOffset = 0;
+            userdata.length = length;
+            userdata.imageCallback = NULL;
+            encoder_output_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) &userdata;
+            if ( startCapture()) {
+              sem_destroy(&mutex);
+              return false;
             }
-            sem_wait ( &mutex );
-            sem_destroy ( &mutex );
+            sem_wait(&mutex);
+            sem_destroy(&mutex);
             stopCapture();
-            delete userdata;
-
             return true;
         }
         
@@ -415,11 +413,11 @@ namespace raspicam {
             commitParameters();
 
             if ( encoder_output_port->is_enabled ) {
-                cout << API_NAME << ": Could not enable encoder output port. Try waiting longer before attempting to take another picture.\n";
+                console->critical( API_NAME  ": Could not enable encoder output port. Try waiting longer before attempting to take another picture.");
                 return -1;
             }
             if ( mmal_port_enable ( encoder_output_port, buffer_callback ) != MMAL_SUCCESS ) {
-                cout << API_NAME << ": Could not enable encoder output port.\n";
+                console->critical( API_NAME  ": Could not enable encoder output port.");
                 return -1;
             }
             int num = mmal_queue_length ( encoder_pool->queue );
@@ -427,13 +425,13 @@ namespace raspicam {
                 MMAL_BUFFER_HEADER_T *buffer = mmal_queue_get ( encoder_pool->queue );
 
                 if ( !buffer )
-                    cout << API_NAME << ": Could not get buffer (#" << b << ") from pool queue.\n";
+                    console->critical( API_NAME  ": Could not get buffer (#" << b << ") from pool queue.");
 
                 if ( mmal_port_send_buffer ( encoder_output_port, buffer ) != MMAL_SUCCESS )
-                    cout << API_NAME << ": Could not send a buffer (#" << b << ") to encoder output port.\n";
+                    console->critical( API_NAME  ": Could not send a buffer (#" << b << ") to encoder output port.");
             }
             if ( mmal_port_parameter_set_boolean ( camera_still_port, MMAL_PARAMETER_CAPTURE, 1 ) != MMAL_SUCCESS ) {
-                cout << API_NAME << ": Failed to start capture.\n";
+                console->critical( API_NAME  ": Failed to start capture.");
                 return -1;
             }
             return 0;
@@ -628,52 +626,52 @@ namespace raspicam {
 
         void cam_still::commitISO() {
             if ( mmal_port_parameter_set_uint32 ( camera->control, MMAL_PARAMETER_ISO, iso ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set ISO parameter.\n";
+                console->critical( API_NAME  ": Failed to set ISO parameter.");
         }
 
         void cam_still::commitSharpness() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_SHARPNESS, ( MMAL_RATIONAL_T ) {
             sharpness, 100
         } ) != MMAL_SUCCESS )
-            cout << API_NAME << ": Failed to set sharpness parameter.\n";
+            console->critical( API_NAME  ": Failed to set sharpness parameter.");
         }
 
         void cam_still::commitContrast() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_CONTRAST, ( MMAL_RATIONAL_T ) {
             contrast, 100
         } ) != MMAL_SUCCESS )
-            cout << API_NAME << ": Failed to set contrast parameter.\n";
+            console->critical( API_NAME  ": Failed to set contrast parameter.");
         }
 
         void cam_still::commitSaturation() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_SATURATION, ( MMAL_RATIONAL_T ) {
             saturation, 100
         } ) != MMAL_SUCCESS )
-            cout << API_NAME << ": Failed to set saturation parameter.\n";
+            console->critical( API_NAME  ": Failed to set saturation parameter.");
         }
 
         void cam_still::commitExposure() {
             MMAL_PARAMETER_EXPOSUREMODE_T exp_mode = {{MMAL_PARAMETER_EXPOSURE_MODE,sizeof ( exp_mode ) }, convertExposure ( exposure ) };
             if ( mmal_port_parameter_set ( camera->control, &exp_mode.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set exposure parameter.\n";
+                console->critical( API_NAME  ": Failed to set exposure parameter.");
         }
 
         void cam_still::commitAWB() {
             MMAL_PARAMETER_AWBMODE_T param = {{MMAL_PARAMETER_AWB_MODE,sizeof ( param ) }, convertAWB ( awb ) };
             if ( mmal_port_parameter_set ( camera->control, &param.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set AWB parameter.\n";
+                console->critical( API_NAME  ": Failed to set AWB parameter.");
         }
 
         void cam_still::commitImageEffect() {
             MMAL_PARAMETER_IMAGEFX_T imgFX = {{MMAL_PARAMETER_IMAGE_EFFECT,sizeof ( imgFX ) }, convertImageEffect ( imageEffect ) };
             if ( mmal_port_parameter_set ( camera->control, &imgFX.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set image effect parameter.\n";
+                console->critical( API_NAME  ": Failed to set image effect parameter.");
         }
 
         void cam_still::commitMetering() {
             MMAL_PARAMETER_EXPOSUREMETERINGMODE_T meter_mode = {{MMAL_PARAMETER_EXP_METERING_MODE, sizeof ( meter_mode ) }, convertMetering ( metering ) };
             if ( mmal_port_parameter_set ( camera->control, &meter_mode.hdr ) != MMAL_SUCCESS )
-                cout << API_NAME << ": Failed to set metering parameter.\n";
+                console->critical( API_NAME  ": Failed to set metering parameter.");
         }
 
         void cam_still::commitFlips() {
@@ -687,7 +685,7 @@ namespace raspicam {
             if ( mmal_port_parameter_set ( camera->output[0], &mirror.hdr ) != MMAL_SUCCESS ||
                     mmal_port_parameter_set ( camera->output[1], &mirror.hdr ) != MMAL_SUCCESS ||
                     mmal_port_parameter_set ( camera->output[2], &mirror.hdr ) )
-                cout << API_NAME << ": Failed to set horizontal/vertical flip parameter.\n";
+                console->critical( API_NAME  ": Failed to set horizontal/vertical flip parameter.");
         }
 
         MMAL_FOURCC_T cam_still::convertEncoding ( RASPICAM_ENCODING encoding ) {
