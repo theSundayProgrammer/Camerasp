@@ -1,4 +1,3 @@
-
 /**********************************************************
  Software developed by AVA ( Ava Group of the University of Cordoba, ava  at uco dot es)
  Main author Rafael Munoz Salinas (rmsalinas at uco dot es)
@@ -36,156 +35,18 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/
 
-#ifndef _Private_RaspiCam_STILL_IMPL_H
-#define _Private_RaspiCam_STILL_IMPL_H
-#include "raspicamtypes.h"
-#include <mmal/mmal.h>
-#include "mmal/util/mmal_connection.h"
-#include <string>
-#define MMAL_CAMERA_CAPTURE_PORT 2
-#define STILLS_FRAME_RATE_NUM 3
-#define STILLS_FRAME_RATE_DEN 1
-namespace raspicam {
-    namespace _private
-    {
-        typedef void ( *imageTakenCallback ) ( unsigned char * data, unsigned int image_offset, unsigned int length );
-
-        class raspicam_still {
-
-            private:
-
-            MMAL_COMPONENT_T * camera;	 /// Pointer to the camera component
-            MMAL_COMPONENT_T * encoder;	/// Pointer to the encoder component
-            MMAL_CONNECTION_T * encoder_connection; // Connection from the camera to the encoder
-            MMAL_POOL_T * encoder_pool;				  /// Pointer to the pool of buffers used by encoder output port
-            MMAL_PORT_T * camera_still_port;
-            MMAL_PORT_T * encoder_input_port;
-            MMAL_PORT_T * encoder_output_port;
-            unsigned int width;
-            unsigned int height;
-            unsigned int rotation; // 0 to 359
-            unsigned int brightness; // 0 to 100
-            unsigned int quality; // 0 to 100
-            int iso;
-            int sharpness; // -100 to 100
-            int contrast; // -100 to 100
-            int saturation; // -100 to 100
-            RASPICAM_ENCODING encoding;
-            RASPICAM_EXPOSURE exposure;
-            RASPICAM_AWB awb;
-            RASPICAM_IMAGE_EFFECT imageEffect;
-            RASPICAM_METERING metering;
-            bool changedSettings;
-            bool horizontalFlip;
-            bool verticalFlip;
-
-            MMAL_FOURCC_T convertEncoding ( RASPICAM_ENCODING encoding );
-            MMAL_PARAM_EXPOSUREMETERINGMODE_T convertMetering ( RASPICAM_METERING metering );
-            MMAL_PARAM_EXPOSUREMODE_T convertExposure ( RASPICAM_EXPOSURE exposure );
-            MMAL_PARAM_AWBMODE_T convertAWB ( RASPICAM_AWB awb );
-            MMAL_PARAM_IMAGEFX_T convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
-            void commitBrightness();
-            void commitQuality();
-            void commitRotation();
-            void commitISO();
-            void commitSharpness();
-            void commitContrast();
-            void commitSaturation();
-            void commitExposure();
-            void commitAWB();
-            void commitImageEffect();
-            void commitMetering();
-            void commitFlips();
-            int startCapture();
-            int createCamera();
-            int createEncoder();
-            void destroyCamera();
-            void destroyEncoder();
-            void setDefaults();
-            MMAL_STATUS_T connectPorts ( MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection );
-
-	    bool _isInitialized;
-            public:
-            const char * API_NAME;
-            raspicam_still() {
-                API_NAME = "raspicam_still";
-                setDefaults();
-                camera = NULL;
-                encoder = NULL;
-                encoder_connection = NULL;
-                encoder_pool = NULL;
-                camera_still_port = NULL;
-                encoder_input_port = NULL;
-                encoder_output_port = NULL;
-		_isInitialized=false;
-            }
-            int initialize();
-            int startCapture ( imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length );
-            void stopCapture();
-            bool takePicture ( unsigned char * preallocated_data, unsigned int length );
-	    void release(); 
-	        size_t getImageBufferSize() const;
-            void bufferCallback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer );
-            void commitParameters();
-            void setWidth ( unsigned int width );
-            void setHeight ( unsigned int height );
-            void setCaptureSize ( unsigned int width, unsigned int height );
-            void setBrightness ( unsigned int brightness );
-            void setQuality ( unsigned int quality );
-            void setRotation ( int rotation );
-            void setISO ( int iso );
-            void setSharpness ( int sharpness );
-            void setContrast ( int contrast );
-            void setSaturation ( int saturation );
-            void setEncoding ( RASPICAM_ENCODING encoding );
-            void setExposure ( RASPICAM_EXPOSURE exposure );
-            void setAWB ( RASPICAM_AWB awb );
-            void setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
-            void setMetering ( RASPICAM_METERING metering );
-            void setHorizontalFlip ( bool hFlip );
-            void setVerticalFlip ( bool vFlip );
-
-            unsigned int getWidth();
-            unsigned int getHeight();
-            unsigned int getBrightness();
-            unsigned int getRotation();
-            unsigned int getQuality();
-            int getISO();
-            int getSharpness();
-            int getContrast();
-            int getSaturation();
-            RASPICAM_ENCODING getEncoding();
-            RASPICAM_EXPOSURE getExposure();
-            RASPICAM_AWB getAWB();
-            RASPICAM_IMAGE_EFFECT getImageEffect();
-            RASPICAM_METERING getMetering();
-            bool isHorizontallyFlipped();
-            bool isVerticallyFlipped();
-
-
-            //Returns an id of the camera. We assume the camera id is the one of the raspberry
-            //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
-            std::string getId() const;
-
-        };
-
-    }
-}
-#endif // RASPICAM_H
 #include <fstream>
-#include "raspicam_still.hpp"
-#include "mmal/mmal_buffer.h"
-#include "mmal/util/mmal_default_components.h"
-#include "mmal/util/mmal_util.h"
-#include "mmal/util/mmal_util_params.h"
+#include <raspicam/cam_still.hpp>
+#include <mmal/mmal_buffer.h>
+#include <mmal/util/mmal_default_components.h>
+#include <mmal/util/mmal_util.h>
+#include <mmal/util/mmal_util_params.h>
 #include <iostream>
 #include <semaphore.h>
 using namespace std;
 namespace raspicam {
-    namespace _private
-    {
         typedef struct {
-            raspicam_still * cameraBoard;
+            cam_still * cameraBoard;
             MMAL_POOL_T * encoderPool;
             imageTakenCallback imageCallback;
             sem_t *mutex;
@@ -250,7 +111,7 @@ namespace raspicam {
             }
         }
 
-        void raspicam_still::setDefaults() {
+        void cam_still::setDefaults() {
             width = 640;
             height = 480;
             encoding = RASPICAM_ENCODING_BMP;
@@ -279,7 +140,7 @@ namespace raspicam {
             //roi.w = params->roi.h = 1.0;
         }
 
-        void raspicam_still::commitParameters() {
+        void cam_still::commitParameters() {
             if ( !changedSettings ) return;
             commitSharpness();
             commitContrast();
@@ -322,7 +183,7 @@ namespace raspicam {
             changedSettings = false;
         }
 
-        MMAL_STATUS_T raspicam_still::connectPorts ( MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection ) {
+        MMAL_STATUS_T cam_still::connectPorts ( MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection ) {
             MMAL_STATUS_T status =  mmal_connection_create ( connection, output_port, input_port, MMAL_CONNECTION_FLAG_TUNNELLING | MMAL_CONNECTION_FLAG_ALLOCATION_ON_INPUT );
             if ( status == MMAL_SUCCESS ) {
                 status =  mmal_connection_enable ( *connection );
@@ -333,10 +194,7 @@ namespace raspicam {
             return status;
         }
 
-        void raspicam_still::release() {
-		destroyCamera();
-        }
-        int raspicam_still::createCamera() {
+        int cam_still::createCamera() {
             if ( mmal_component_create ( MMAL_COMPONENT_DEFAULT_CAMERA, &camera ) ) {
                 cout << API_NAME << ": Failed to create camera component.\n";
                 destroyCamera();
@@ -413,7 +271,7 @@ namespace raspicam {
             return 0;
         }
 
-        int raspicam_still::createEncoder() {
+        int cam_still::createEncoder() {
             if ( mmal_component_create ( MMAL_COMPONENT_DEFAULT_IMAGE_ENCODER, &encoder ) ) {
                 cout << API_NAME << ": Could not create encoder component.\n";
                 destroyEncoder();
@@ -455,14 +313,14 @@ namespace raspicam {
             return 0;
         }
 
-        void raspicam_still::destroyCamera() {
+        void cam_still::destroyCamera() {
             if ( camera ) {
                 mmal_component_destroy ( camera );
                 camera = NULL;
             }
         }
 
-        void raspicam_still::destroyEncoder() {
+        void cam_still::destroyEncoder() {
             if ( encoder_pool ) {
                 mmal_port_pool_destroy ( encoder->output[0], encoder_pool );
             }
@@ -472,7 +330,15 @@ namespace raspicam {
             }
         }
 
-        int raspicam_still::initialize() {
+        void cam_still::release() {
+            if ( !_isInitialized ) return ;
+            mmal_connection_destroy(encoder_connection); 
+            destroyEncoder();
+            destroyCamera();
+            _isInitialized=false;
+        }
+
+        int cam_still::initialize() {
             if ( _isInitialized ) return 0;
             if ( createCamera() ) {
                 cout << API_NAME << ": Failed to create camera component.\n";
@@ -495,7 +361,7 @@ namespace raspicam {
             return 0;
         }
 
-        bool raspicam_still::takePicture ( unsigned char * preallocated_data, unsigned int length ) {
+        bool cam_still::takePicture ( unsigned char * preallocated_data, unsigned int length ) {
             initialize();
             int ret = 0;
             sem_t mutex;
@@ -523,11 +389,11 @@ namespace raspicam {
             return true;
         }
         
-        size_t raspicam_still::getImageBufferSize() const{
+        size_t cam_still::getImageBufferSize() const{
 	    return width*height*3+54 ;//oversize the buffer so to fit BMP images
         }
 
-        int raspicam_still::startCapture ( imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length ) {
+        int cam_still::startCapture ( imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length ) {
             RASPICAM_USERDATA * userdata = new RASPICAM_USERDATA();
             userdata->cameraBoard = this;
             userdata->encoderPool = encoder_pool;
@@ -543,7 +409,7 @@ namespace raspicam {
             return 0;
         }
 
-        int raspicam_still::startCapture() {
+        int cam_still::startCapture() {
             // If the parameters were changed and this function wasn't called, it will be called here
             // However if the parameters weren't changed, the function won't do anything - it will return right away
             commitParameters();
@@ -573,42 +439,42 @@ namespace raspicam {
             return 0;
         }
 
-        void raspicam_still::stopCapture() {
+        void cam_still::stopCapture() {
             if ( !encoder_output_port->is_enabled ) return;
             if ( mmal_port_disable ( encoder_output_port ) )
                 delete ( RASPICAM_USERDATA* ) encoder_output_port->userdata;
         }
 
-        void raspicam_still::setWidth ( unsigned int width ) {
+        void cam_still::setWidth ( unsigned int width ) {
             this->width = width;
             changedSettings = true;
         }
 
-        void raspicam_still::setHeight ( unsigned int height ) {
+        void cam_still::setHeight ( unsigned int height ) {
             this->height = height;
             changedSettings = true;
         }
 
-        void raspicam_still::setCaptureSize ( unsigned int width, unsigned int height ) {
+        void cam_still::setCaptureSize ( unsigned int width, unsigned int height ) {
             setWidth ( width );
             setHeight ( height );
         }
 
-        void raspicam_still::setBrightness ( unsigned int brightness ) {
+        void cam_still::setBrightness ( unsigned int brightness ) {
             if ( brightness > 100 )
                 brightness = brightness % 100;
             this->brightness = brightness;
             changedSettings = true;
         }
 
-        void raspicam_still::setQuality ( unsigned int quality ) {
+        void cam_still::setQuality ( unsigned int quality ) {
             if ( quality > 100 )
                 quality = 100;
             this->quality = quality;
             changedSettings = true;
         }
 
-        void raspicam_still::setRotation ( int rotation ) {
+        void cam_still::setRotation ( int rotation ) {
             while ( rotation < 0 )
                 rotation += 360;
             if ( rotation >= 360 )
@@ -617,200 +483,200 @@ namespace raspicam {
             changedSettings = true;
         }
 
-        void raspicam_still::setISO ( int iso ) {
+        void cam_still::setISO ( int iso ) {
             this->iso = iso;
             changedSettings = true;
         }
 
-        void raspicam_still::setSharpness ( int sharpness ) {
+        void cam_still::setSharpness ( int sharpness ) {
             if ( sharpness < -100 ) sharpness = -100;
             if ( sharpness > 100 ) sharpness = 100;
             this->sharpness = sharpness;
             changedSettings = true;
         }
 
-        void raspicam_still::setContrast ( int contrast ) {
+        void cam_still::setContrast ( int contrast ) {
             if ( contrast < -100 ) contrast = -100;
             if ( contrast > 100 ) contrast = 100;
             this->contrast = contrast;
             changedSettings = true;
         }
 
-        void raspicam_still::setSaturation ( int saturation ) {
+        void cam_still::setSaturation ( int saturation ) {
             if ( saturation < -100 ) saturation = -100;
             if ( saturation > 100 ) saturation = 100;
             this->saturation = saturation;
             changedSettings = true;
         }
 
-        void raspicam_still::setEncoding ( RASPICAM_ENCODING encoding ) {
+        void cam_still::setEncoding ( RASPICAM_ENCODING encoding ) {
             this->encoding = encoding;
             changedSettings = true;
         }
 
-        void raspicam_still::setExposure ( RASPICAM_EXPOSURE exposure ) {
+        void cam_still::setExposure ( RASPICAM_EXPOSURE exposure ) {
             this->exposure = exposure;
             changedSettings = true;
         }
 
-        void raspicam_still::setAWB ( RASPICAM_AWB awb ) {
+        void cam_still::setAWB ( RASPICAM_AWB awb ) {
             this->awb = awb;
             changedSettings = true;
         }
 
-        void raspicam_still::setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
+        void cam_still::setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
             this->imageEffect = imageEffect;
             changedSettings = true;
         }
 
-        void raspicam_still::setMetering ( RASPICAM_METERING metering ) {
+        void cam_still::setMetering ( RASPICAM_METERING metering ) {
             this->metering = metering;
             changedSettings = true;
         }
 
-        void raspicam_still::setHorizontalFlip ( bool hFlip ) {
+        void cam_still::setHorizontalFlip ( bool hFlip ) {
             horizontalFlip = hFlip;
             changedSettings = true;
         }
 
-        void raspicam_still::setVerticalFlip ( bool vFlip ) {
+        void cam_still::setVerticalFlip ( bool vFlip ) {
             verticalFlip = vFlip;
             changedSettings = true;
         }
 
-        unsigned int raspicam_still::getWidth() {
+        unsigned int cam_still::getWidth() {
             return width;
         }
 
-        unsigned int raspicam_still::getHeight() {
+        unsigned int cam_still::getHeight() {
             return height;
         }
 
-        unsigned int raspicam_still::getBrightness() {
+        unsigned int cam_still::getBrightness() {
             return brightness;
         }
 
-        unsigned int raspicam_still::getRotation() {
+        unsigned int cam_still::getRotation() {
             return rotation;
         }
 
-        unsigned int raspicam_still::getQuality() {
+        unsigned int cam_still::getQuality() {
             return quality;
         }
 
-        int raspicam_still::getISO() {
+        int cam_still::getISO() {
             return iso;
         }
 
-        int raspicam_still::getSharpness() {
+        int cam_still::getSharpness() {
             return sharpness;
         }
 
-        int raspicam_still::getContrast() {
+        int cam_still::getContrast() {
             return contrast;
         }
 
-        int raspicam_still::getSaturation() {
+        int cam_still::getSaturation() {
             return saturation;
         }
 
-        RASPICAM_ENCODING raspicam_still::getEncoding() {
+        RASPICAM_ENCODING cam_still::getEncoding() {
             return encoding;
         }
 
-        RASPICAM_EXPOSURE raspicam_still::getExposure() {
+        RASPICAM_EXPOSURE cam_still::getExposure() {
             return exposure;
         }
 
-        RASPICAM_AWB raspicam_still::getAWB() {
+        RASPICAM_AWB cam_still::getAWB() {
             return awb;
         }
 
-        RASPICAM_IMAGE_EFFECT raspicam_still::getImageEffect() {
+        RASPICAM_IMAGE_EFFECT cam_still::getImageEffect() {
             return imageEffect;
         }
 
-        RASPICAM_METERING raspicam_still::getMetering() {
+        RASPICAM_METERING cam_still::getMetering() {
             return metering;
         }
 
-        bool raspicam_still::isHorizontallyFlipped() {
+        bool cam_still::isHorizontallyFlipped() {
             return horizontalFlip;
         }
 
-        bool raspicam_still::isVerticallyFlipped() {
+        bool cam_still::isVerticallyFlipped() {
             return verticalFlip;
         }
 
-        void raspicam_still::commitBrightness() {
+        void cam_still::commitBrightness() {
             mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_BRIGHTNESS, ( MMAL_RATIONAL_T ) {
                 (int32_t)brightness, 100
             } );
         }
 
-        void raspicam_still::commitQuality() {
+        void cam_still::commitQuality() {
             if ( encoder_output_port != NULL )
                 mmal_port_parameter_set_uint32 ( encoder_output_port, MMAL_PARAMETER_JPEG_Q_FACTOR, quality );
         }
 
-        void raspicam_still::commitRotation() {
+        void cam_still::commitRotation() {
             int rotation = int ( this->rotation / 90 ) * 90;
             mmal_port_parameter_set_int32 ( camera->output[0], MMAL_PARAMETER_ROTATION, rotation );
             mmal_port_parameter_set_int32 ( camera->output[1], MMAL_PARAMETER_ROTATION, rotation );
             mmal_port_parameter_set_int32 ( camera->output[2], MMAL_PARAMETER_ROTATION, rotation );
         }
 
-        void raspicam_still::commitISO() {
+        void cam_still::commitISO() {
             if ( mmal_port_parameter_set_uint32 ( camera->control, MMAL_PARAMETER_ISO, iso ) != MMAL_SUCCESS )
                 cout << API_NAME << ": Failed to set ISO parameter.\n";
         }
 
-        void raspicam_still::commitSharpness() {
+        void cam_still::commitSharpness() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_SHARPNESS, ( MMAL_RATIONAL_T ) {
             sharpness, 100
         } ) != MMAL_SUCCESS )
             cout << API_NAME << ": Failed to set sharpness parameter.\n";
         }
 
-        void raspicam_still::commitContrast() {
+        void cam_still::commitContrast() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_CONTRAST, ( MMAL_RATIONAL_T ) {
             contrast, 100
         } ) != MMAL_SUCCESS )
             cout << API_NAME << ": Failed to set contrast parameter.\n";
         }
 
-        void raspicam_still::commitSaturation() {
+        void cam_still::commitSaturation() {
             if ( mmal_port_parameter_set_rational ( camera->control, MMAL_PARAMETER_SATURATION, ( MMAL_RATIONAL_T ) {
             saturation, 100
         } ) != MMAL_SUCCESS )
             cout << API_NAME << ": Failed to set saturation parameter.\n";
         }
 
-        void raspicam_still::commitExposure() {
+        void cam_still::commitExposure() {
             MMAL_PARAMETER_EXPOSUREMODE_T exp_mode = {{MMAL_PARAMETER_EXPOSURE_MODE,sizeof ( exp_mode ) }, convertExposure ( exposure ) };
             if ( mmal_port_parameter_set ( camera->control, &exp_mode.hdr ) != MMAL_SUCCESS )
                 cout << API_NAME << ": Failed to set exposure parameter.\n";
         }
 
-        void raspicam_still::commitAWB() {
+        void cam_still::commitAWB() {
             MMAL_PARAMETER_AWBMODE_T param = {{MMAL_PARAMETER_AWB_MODE,sizeof ( param ) }, convertAWB ( awb ) };
             if ( mmal_port_parameter_set ( camera->control, &param.hdr ) != MMAL_SUCCESS )
                 cout << API_NAME << ": Failed to set AWB parameter.\n";
         }
 
-        void raspicam_still::commitImageEffect() {
+        void cam_still::commitImageEffect() {
             MMAL_PARAMETER_IMAGEFX_T imgFX = {{MMAL_PARAMETER_IMAGE_EFFECT,sizeof ( imgFX ) }, convertImageEffect ( imageEffect ) };
             if ( mmal_port_parameter_set ( camera->control, &imgFX.hdr ) != MMAL_SUCCESS )
                 cout << API_NAME << ": Failed to set image effect parameter.\n";
         }
 
-        void raspicam_still::commitMetering() {
+        void cam_still::commitMetering() {
             MMAL_PARAMETER_EXPOSUREMETERINGMODE_T meter_mode = {{MMAL_PARAMETER_EXP_METERING_MODE, sizeof ( meter_mode ) }, convertMetering ( metering ) };
             if ( mmal_port_parameter_set ( camera->control, &meter_mode.hdr ) != MMAL_SUCCESS )
                 cout << API_NAME << ": Failed to set metering parameter.\n";
         }
 
-        void raspicam_still::commitFlips() {
+        void cam_still::commitFlips() {
             MMAL_PARAMETER_MIRROR_T mirror = {{MMAL_PARAMETER_MIRROR, sizeof ( MMAL_PARAMETER_MIRROR_T ) }, MMAL_PARAM_MIRROR_NONE};
             if ( horizontalFlip && verticalFlip )
                 mirror.value = MMAL_PARAM_MIRROR_BOTH;
@@ -824,7 +690,7 @@ namespace raspicam {
                 cout << API_NAME << ": Failed to set horizontal/vertical flip parameter.\n";
         }
 
-        MMAL_FOURCC_T raspicam_still::convertEncoding ( RASPICAM_ENCODING encoding ) {
+        MMAL_FOURCC_T cam_still::convertEncoding ( RASPICAM_ENCODING encoding ) {
             switch ( encoding ) {
             case RASPICAM_ENCODING_JPEG:
                 return MMAL_ENCODING_JPEG;
@@ -841,7 +707,7 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_EXPOSUREMETERINGMODE_T raspicam_still::convertMetering ( RASPICAM_METERING metering ) {
+        MMAL_PARAM_EXPOSUREMETERINGMODE_T cam_still::convertMetering ( RASPICAM_METERING metering ) {
             switch ( metering ) {
             case RASPICAM_METERING_AVERAGE:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE;
@@ -856,7 +722,7 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_EXPOSUREMODE_T raspicam_still::convertExposure ( RASPICAM_EXPOSURE exposure ) {
+        MMAL_PARAM_EXPOSUREMODE_T cam_still::convertExposure ( RASPICAM_EXPOSURE exposure ) {
             switch ( exposure ) {
             case RASPICAM_EXPOSURE_OFF:
                 return MMAL_PARAM_EXPOSUREMODE_OFF;
@@ -889,7 +755,7 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_AWBMODE_T raspicam_still::convertAWB ( RASPICAM_AWB awb ) {
+        MMAL_PARAM_AWBMODE_T cam_still::convertAWB ( RASPICAM_AWB awb ) {
             switch ( awb ) {
             case RASPICAM_AWB_OFF:
                 return MMAL_PARAM_AWBMODE_OFF;
@@ -916,7 +782,7 @@ namespace raspicam {
             }
         }
 
-        MMAL_PARAM_IMAGEFX_T raspicam_still::convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
+        MMAL_PARAM_IMAGEFX_T cam_still::convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
             switch ( imageEffect ) {
             default:
             case RASPICAM_IMAGE_EFFECT_NONE:
@@ -964,7 +830,7 @@ namespace raspicam {
         
         //Returns an id of the camera. We assume the camera id is the one of the raspberry
         //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
-        string raspicam_still::getId() const{
+        string cam_still::getId() const{
             char serial[1024];
             serial[0]='\0';
             ifstream file ( "/proc/cpuinfo" );
@@ -988,6 +854,16 @@ namespace raspicam {
             };
             return serial;
         }
+
+
+    bool cam_still::open ( ) {
+        return initialize() ==0;
     }
-    
+    bool cam_still::grab_retrieve ( unsigned char * preallocated_data, unsigned int length ) {
+        return takePicture ( preallocated_data, length );
+
+    }
+
 }
+
+

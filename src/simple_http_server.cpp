@@ -53,7 +53,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 
 
 #else
-#include <raspicam/raspicam_still.h>
+//#include <raspicam/cam_still.h>
 typedef int errno_t;
 const std::string configPath="/srv/camerasp/";
 #endif
@@ -116,7 +116,7 @@ int main(int /* argc */, char* argv[]){
   //console = spd::stdout_color_mt("console");
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
-  raspicam::RaspiCam camera;
+  raspicam::cam_still camera;
   try  {
     console->info("Welcome to spdlog!");
       Json::Value camera_config = root["Camera"];

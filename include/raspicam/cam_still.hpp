@@ -45,11 +45,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define STILLS_FRAME_RATE_NUM 3
 #define STILLS_FRAME_RATE_DEN 1
 namespace raspicam {
-    namespace _private
-    {
         typedef void ( *imageTakenCallback ) ( unsigned char * data, unsigned int image_offset, unsigned int length );
 
-        class raspicam_still {
+        class cam_still {
 
             private:
 
@@ -106,7 +104,10 @@ namespace raspicam {
 	    bool _isInitialized;
             public:
             const char * API_NAME;
-            raspicam_still() {
+            ~cam_still() {
+               release();
+               }
+            cam_still() {
                 API_NAME = "raspicam_still";
                 setDefaults();
                 camera = NULL;
@@ -119,6 +120,10 @@ namespace raspicam {
 		_isInitialized=false;
             }
             int initialize();
+            bool open ( );
+            //Grabs and set the data into the data buffer which has the indicated length. It is your responsability
+            // to alloc the buffer. You can use getImageBufferSize for that matter.
+            bool grab_retrieve ( unsigned char * data, unsigned int length );
             int startCapture ( imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length );
             void stopCapture();
             bool takePicture ( unsigned char * preallocated_data, unsigned int length );
@@ -168,6 +173,5 @@ namespace raspicam {
 
         };
 
-    }
 }
 #endif // RASPICAM_H

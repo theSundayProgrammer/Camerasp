@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/#include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include "raspicam_still.h"
+#include <raspicam/cam_still.hpp>
 #include <unistd.h>
 
 using namespace std;
@@ -68,7 +68,7 @@ int main ( int argc, char *argv[] ) {
 
     cout << "Initializing ..."<<width<<"x"<<height<<endl;
     {
-        raspicam::RaspiCam_Still *camera=new raspicam::RaspiCam_Still();
+        raspicam::cam_still *camera=new raspicam::cam_still();
         camera->setWidth ( width );
         camera->setHeight ( height );
         camera->setISO(iso);
@@ -91,8 +91,8 @@ int main ( int argc, char *argv[] ) {
     {
         unsigned int secs=20;
         cout<<"capture1"<<endl;
-        sleep(secs);
-        raspicam::RaspiCam_Still *camera=new raspicam::RaspiCam_Still();
+        //sleep(secs);
+        raspicam::cam_still *camera=new raspicam::cam_still();
         cout<<"capture2"<<endl;
         camera->setWidth ( width );
         cout<<"capture3"<<endl;

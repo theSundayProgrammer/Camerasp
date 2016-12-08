@@ -51,13 +51,12 @@ namespace Camerasp {
       save_image(buffer, pathname_prefix + intstr + ".jpg");
       --pending_count;
   }
-  static std::vector<unsigned char> grabPicture(raspicam::RaspiCam& camera_)  {
+  static std::vector<unsigned char> grabPicture(raspicam::cam_still& camera_)  {
     //At any point in time only one instance of this function will be running
     Camerasp::ImgInfo info;
-    camera_.grab();
     int siz = camera_.getImageBufferSize();
     info.buffer.resize(siz);
-    camera_.retrieve((unsigned char*)(&info.buffer[0]));
+    camera_.grab_retrieve((unsigned char*)(&info.buffer[0]),siz);
     info.image_height = camera_.getHeight();
     console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
     info.image_width = camera_.getWidth();
@@ -75,7 +74,7 @@ namespace Camerasp {
   void handle_timeout(
     const asio::error_code&,
     high_resolution_timer& timer,
-    raspicam::RaspiCam& camera_) {
+    raspicam::cam_still& camera_) {
     //At any point in time only one instance of this function will be running
     using namespace std::placeholders;
 
@@ -109,7 +108,7 @@ namespace Camerasp {
 
   void setTimer(
     high_resolution_timer& timer,
-    raspicam::RaspiCam& camera_) {
+    raspicam::cam_still& camera_) {
      using namespace std::placeholders;
     try {
       quitFlag = 0;

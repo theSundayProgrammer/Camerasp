@@ -91,7 +91,7 @@ raspicam::RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
 
 namespace Camerasp
 {
-  void processCommandLine(std::map<std::string, std::string> const& nameVal, raspicam::RaspiCam &Camera) {
+  void processCommandLine(std::map<std::string, std::string> const& nameVal, raspicam::cam_still &Camera) {
     Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
     Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
     Camera.setBrightness(getParamVal("brightness", nameVal, 50));
@@ -99,16 +99,15 @@ namespace Camerasp
     Camera.setSharpness(getParamVal("sharpness", nameVal, 0));
     Camera.setContrast(getParamVal("contrast", nameVal, 0));
     Camera.setSaturation(getParamVal("saturation", nameVal, 0));
-    Camera.setShutterSpeed(getParamVal("shutterspeed", nameVal, 0));
+    //Camera.setShutterSpeed(getParamVal("shutterspeed", nameVal, 0));
     Camera.setISO(getParamVal("iso", nameVal, 400));
-    Camera.setVideoStabilization(getParamVal("videostabilisation", nameVal, false));
-    Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
+    //Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
     auto it = nameVal.find("format");
     raspicam::RASPICAM_FORMAT fmt = (it != end(nameVal)) ?
       getFormatFromString(it->second) :
       raspicam::RASPICAM_FORMAT_RGB;
-    Camera.setFormat(fmt);
+    //Camera.setFormat(fmt);
     it = nameVal.find("exposure");
     if (it != end(nameVal))
       Camera.setExposure(getExposureFromString(it->second));
@@ -121,7 +120,7 @@ namespace Camerasp
 
 
   }
-  void processCommandLine(Json::Value const& nameVal, raspicam::RaspiCam &Camera) {
+  void processCommandLine(Json::Value const& nameVal, raspicam::cam_still &Camera) {
     Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
     Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
     Camera.setBrightness(getParamVal("brightness", nameVal, 50));
@@ -129,13 +128,12 @@ namespace Camerasp
     Camera.setSharpness(getParamVal("sharpness", nameVal, 0));
     Camera.setContrast(getParamVal("contrast", nameVal, 0));
     Camera.setSaturation(getParamVal("saturation", nameVal, 0));
-    Camera.setShutterSpeed(getParamVal("shutterspeed", nameVal, 0));
+    //Camera.setShutterSpeed(getParamVal("shutterspeed", nameVal, 0));
     Camera.setISO(getParamVal("iso", nameVal, 400));
-    Camera.setVideoStabilization( false); //todo: read from json
-    Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
+    //Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
     raspicam::RASPICAM_FORMAT fmt =  raspicam::RASPICAM_FORMAT_RGB;
-    Camera.setFormat(fmt);
+    //Camera.setFormat(fmt);
 
   }
 
