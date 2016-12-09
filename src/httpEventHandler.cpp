@@ -46,7 +46,7 @@ struct UrlParser {
 
   return (*p == 0);
 }
-Handlers::Handlers(raspicam::cam_still& Camera) : 
+Handlers::Handlers(camerasp::cam_still& Camera) : 
   camera_(Camera)
   {}
 

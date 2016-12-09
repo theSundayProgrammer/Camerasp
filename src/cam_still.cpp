@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ****************************************************************/
 
 #include <fstream>
-#include <raspicam/cam_still.hpp>
+#include <camerasp/cam_still.hpp>
 #include <mmal/mmal_buffer.h>
 #include <mmal/util/mmal_default_components.h>
 #include <mmal/util/mmal_util.h>
@@ -45,7 +45,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <camerasp/parseCmd.hpp>
 using namespace std;
 #define API_NAME  "raspicam_still"
-namespace raspicam {
+namespace camerasp {
         typedef struct {
             cam_still * cameraBoard;
             MMAL_POOL_T * encoderPool;
@@ -80,7 +80,7 @@ namespace raspicam {
                         userdata->cameraBoard = NULL;
                         break;
                     } else {
-                        if ( userdata->cameraBoard->getEncoding() == RASPICAM_ENCODING_RGB ) {
+                        if ( userdata->cameraBoard->getEncoding() == raspicam::RASPICAM_ENCODING_RGB ) {
                             // Determines if the byte is an RGB value
                             if ( userdata->bufferPosition >= 54 ) {
                                 userdata->data[userdata->offset] = buffer->data[i];
@@ -115,7 +115,7 @@ namespace raspicam {
         void cam_still::setDefaults() {
             width = 640;
             height = 480;
-            encoding = RASPICAM_ENCODING_BMP;
+            encoding = raspicam::RASPICAM_ENCODING_BMP;
             encoder = NULL;
             encoder_connection = NULL;
             sharpness = 0;
@@ -126,10 +126,10 @@ namespace raspicam {
             iso = 400;
             //videoStabilisation = 0;
             //exposureCompensation = 0;
-            exposure = RASPICAM_EXPOSURE_AUTO;
-            metering = RASPICAM_METERING_AVERAGE;
-            awb = RASPICAM_AWB_AUTO;
-            imageEffect = RASPICAM_IMAGE_EFFECT_NONE;
+            exposure = raspicam::RASPICAM_EXPOSURE_AUTO;
+            metering = raspicam::RASPICAM_METERING_AVERAGE;
+            awb = raspicam::RASPICAM_AWB_AUTO;
+            imageEffect = raspicam::RASPICAM_IMAGE_EFFECT_NONE;
             //colourEffects.enable = 0;
             //colourEffects.u = 128;
             //colourEffects.v = 128;
@@ -336,6 +336,7 @@ namespace raspicam {
             mmal_connection_destroy(encoder_connection); 
             destroyEncoder();
             destroyCamera();
+            console->info( API_NAME  ": release called");
             _isInitialized=false;
         }
 
@@ -367,17 +368,17 @@ namespace raspicam {
             int ret = 0;
             sem_t mutex;
             sem_init ( &mutex, 0, 0 );
-            RASPICAM_USERDATA  userdata ;
-            userdata.cameraBoard = this;
-            userdata.encoderPool = encoder_pool;
-            userdata.mutex = &mutex;
-            userdata.data = preallocated_data;
-            userdata.bufferPosition = 0;
-            userdata.offset = 0;
-            userdata.startingOffset = 0;
-            userdata.length = length;
-            userdata.imageCallback = NULL;
-            encoder_output_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) &userdata;
+            RASPICAM_USERDATA * userdata = new RASPICAM_USERDATA();
+            userdata->cameraBoard = this;
+            userdata->encoderPool = encoder_pool;
+            userdata->mutex = &mutex;
+            userdata->data = preallocated_data;
+            userdata->bufferPosition = 0;
+            userdata->offset = 0;
+            userdata->startingOffset = 0;
+            userdata->length = length;
+            userdata->imageCallback = NULL;
+            encoder_output_port->userdata = ( struct MMAL_PORT_USERDATA_T * ) userdata;
             if ( startCapture()) {
               sem_destroy(&mutex);
               return false;
@@ -508,27 +509,27 @@ namespace raspicam {
             changedSettings = true;
         }
 
-        void cam_still::setEncoding ( RASPICAM_ENCODING encoding ) {
+        void cam_still::setEncoding ( raspicam::RASPICAM_ENCODING encoding ) {
             this->encoding = encoding;
             changedSettings = true;
         }
 
-        void cam_still::setExposure ( RASPICAM_EXPOSURE exposure ) {
+        void cam_still::setExposure ( raspicam::RASPICAM_EXPOSURE exposure ) {
             this->exposure = exposure;
             changedSettings = true;
         }
 
-        void cam_still::setAWB ( RASPICAM_AWB awb ) {
+        void cam_still::setAWB ( raspicam::RASPICAM_AWB awb ) {
             this->awb = awb;
             changedSettings = true;
         }
 
-        void cam_still::setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
+        void cam_still::setImageEffect ( raspicam::RASPICAM_IMAGE_EFFECT imageEffect ) {
             this->imageEffect = imageEffect;
             changedSettings = true;
         }
 
-        void cam_still::setMetering ( RASPICAM_METERING metering ) {
+        void cam_still::setMetering ( raspicam::RASPICAM_METERING metering ) {
             this->metering = metering;
             changedSettings = true;
         }
@@ -579,23 +580,23 @@ namespace raspicam {
             return saturation;
         }
 
-        RASPICAM_ENCODING cam_still::getEncoding() {
+        raspicam::RASPICAM_ENCODING cam_still::getEncoding() {
             return encoding;
         }
 
-        RASPICAM_EXPOSURE cam_still::getExposure() {
+        raspicam::RASPICAM_EXPOSURE cam_still::getExposure() {
             return exposure;
         }
 
-        RASPICAM_AWB cam_still::getAWB() {
+        raspicam::RASPICAM_AWB cam_still::getAWB() {
             return awb;
         }
 
-        RASPICAM_IMAGE_EFFECT cam_still::getImageEffect() {
+        raspicam::RASPICAM_IMAGE_EFFECT cam_still::getImageEffect() {
             return imageEffect;
         }
 
-        RASPICAM_METERING cam_still::getMetering() {
+        raspicam::RASPICAM_METERING cam_still::getMetering() {
             return metering;
         }
 
@@ -689,140 +690,140 @@ namespace raspicam {
                 console->error( API_NAME  ": Failed to set horizontal/vertical flip parameter.");
         }
 
-        MMAL_FOURCC_T cam_still::convertEncoding ( RASPICAM_ENCODING encoding ) {
+        MMAL_FOURCC_T cam_still::convertEncoding ( raspicam::RASPICAM_ENCODING encoding ) {
             switch ( encoding ) {
-            case RASPICAM_ENCODING_JPEG:
+            case raspicam::RASPICAM_ENCODING_JPEG:
                 return MMAL_ENCODING_JPEG;
-            case RASPICAM_ENCODING_BMP:
+            case raspicam::RASPICAM_ENCODING_BMP:
                 return MMAL_ENCODING_BMP;
-            case RASPICAM_ENCODING_GIF:
+            case raspicam::RASPICAM_ENCODING_GIF:
                 return MMAL_ENCODING_GIF;
-            case RASPICAM_ENCODING_PNG:
+            case raspicam::RASPICAM_ENCODING_PNG:
                 return MMAL_ENCODING_PNG;
-            case RASPICAM_ENCODING_RGB:
+            case raspicam::RASPICAM_ENCODING_RGB:
                 return MMAL_ENCODING_BMP;
             default:
                 return -1;
             }
         }
 
-        MMAL_PARAM_EXPOSUREMETERINGMODE_T cam_still::convertMetering ( RASPICAM_METERING metering ) {
+        MMAL_PARAM_EXPOSUREMETERINGMODE_T cam_still::convertMetering ( raspicam::RASPICAM_METERING metering ) {
             switch ( metering ) {
-            case RASPICAM_METERING_AVERAGE:
+            case raspicam::RASPICAM_METERING_AVERAGE:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE;
-            case RASPICAM_METERING_SPOT:
+            case raspicam::RASPICAM_METERING_SPOT:
                 return  MMAL_PARAM_EXPOSUREMETERINGMODE_SPOT;
-            case RASPICAM_METERING_BACKLIT:
+            case raspicam::RASPICAM_METERING_BACKLIT:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_BACKLIT;
-            case RASPICAM_METERING_MATRIX:
+            case raspicam::RASPICAM_METERING_MATRIX:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_MATRIX;
             default:
                 return MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE;
             }
         }
 
-        MMAL_PARAM_EXPOSUREMODE_T cam_still::convertExposure ( RASPICAM_EXPOSURE exposure ) {
+        MMAL_PARAM_EXPOSUREMODE_T cam_still::convertExposure ( raspicam::RASPICAM_EXPOSURE exposure ) {
             switch ( exposure ) {
-            case RASPICAM_EXPOSURE_OFF:
+            case raspicam::RASPICAM_EXPOSURE_OFF:
                 return MMAL_PARAM_EXPOSUREMODE_OFF;
-            case RASPICAM_EXPOSURE_AUTO:
+            case raspicam::RASPICAM_EXPOSURE_AUTO:
                 return MMAL_PARAM_EXPOSUREMODE_AUTO;
-            case RASPICAM_EXPOSURE_NIGHT:
+            case raspicam::RASPICAM_EXPOSURE_NIGHT:
                 return MMAL_PARAM_EXPOSUREMODE_NIGHT;
-            case RASPICAM_EXPOSURE_NIGHTPREVIEW:
+            case raspicam::RASPICAM_EXPOSURE_NIGHTPREVIEW:
                 return MMAL_PARAM_EXPOSUREMODE_NIGHTPREVIEW;
-            case RASPICAM_EXPOSURE_BACKLIGHT:
+            case raspicam::RASPICAM_EXPOSURE_BACKLIGHT:
                 return MMAL_PARAM_EXPOSUREMODE_BACKLIGHT;
-            case RASPICAM_EXPOSURE_SPOTLIGHT:
+            case raspicam::RASPICAM_EXPOSURE_SPOTLIGHT:
                 return MMAL_PARAM_EXPOSUREMODE_SPOTLIGHT;
-            case RASPICAM_EXPOSURE_SPORTS:
+            case raspicam::RASPICAM_EXPOSURE_SPORTS:
                 return MMAL_PARAM_EXPOSUREMODE_SPORTS;
-            case RASPICAM_EXPOSURE_SNOW:
+            case raspicam::RASPICAM_EXPOSURE_SNOW:
                 return MMAL_PARAM_EXPOSUREMODE_SNOW;
-            case RASPICAM_EXPOSURE_BEACH:
+            case raspicam::RASPICAM_EXPOSURE_BEACH:
                 return MMAL_PARAM_EXPOSUREMODE_BEACH;
-            case RASPICAM_EXPOSURE_VERYLONG:
+            case raspicam::RASPICAM_EXPOSURE_VERYLONG:
                 return MMAL_PARAM_EXPOSUREMODE_VERYLONG;
-            case RASPICAM_EXPOSURE_FIXEDFPS:
+            case raspicam::RASPICAM_EXPOSURE_FIXEDFPS:
                 return MMAL_PARAM_EXPOSUREMODE_FIXEDFPS;
-            case RASPICAM_EXPOSURE_ANTISHAKE:
+            case raspicam::RASPICAM_EXPOSURE_ANTISHAKE:
                 return MMAL_PARAM_EXPOSUREMODE_ANTISHAKE;
-            case RASPICAM_EXPOSURE_FIREWORKS:
+            case raspicam::RASPICAM_EXPOSURE_FIREWORKS:
                 return MMAL_PARAM_EXPOSUREMODE_FIREWORKS;
             default:
                 return MMAL_PARAM_EXPOSUREMODE_AUTO;
             }
         }
 
-        MMAL_PARAM_AWBMODE_T cam_still::convertAWB ( RASPICAM_AWB awb ) {
+        MMAL_PARAM_AWBMODE_T cam_still::convertAWB ( raspicam::RASPICAM_AWB awb ) {
             switch ( awb ) {
-            case RASPICAM_AWB_OFF:
+            case raspicam::RASPICAM_AWB_OFF:
                 return MMAL_PARAM_AWBMODE_OFF;
-            case RASPICAM_AWB_AUTO:
+            case raspicam::RASPICAM_AWB_AUTO:
                 return MMAL_PARAM_AWBMODE_AUTO;
-            case RASPICAM_AWB_SUNLIGHT:
+            case raspicam::RASPICAM_AWB_SUNLIGHT:
                 return MMAL_PARAM_AWBMODE_SUNLIGHT;
-            case RASPICAM_AWB_CLOUDY:
+            case raspicam::RASPICAM_AWB_CLOUDY:
                 return MMAL_PARAM_AWBMODE_CLOUDY;
-            case RASPICAM_AWB_SHADE:
+            case raspicam::RASPICAM_AWB_SHADE:
                 return MMAL_PARAM_AWBMODE_SHADE;
-            case RASPICAM_AWB_TUNGSTEN:
+            case raspicam::RASPICAM_AWB_TUNGSTEN:
                 return MMAL_PARAM_AWBMODE_TUNGSTEN;
-            case RASPICAM_AWB_FLUORESCENT:
+            case raspicam::RASPICAM_AWB_FLUORESCENT:
                 return MMAL_PARAM_AWBMODE_FLUORESCENT;
-            case RASPICAM_AWB_INCANDESCENT:
+            case raspicam::RASPICAM_AWB_INCANDESCENT:
                 return MMAL_PARAM_AWBMODE_INCANDESCENT;
-            case RASPICAM_AWB_FLASH:
+            case raspicam::RASPICAM_AWB_FLASH:
                 return MMAL_PARAM_AWBMODE_FLASH;
-            case RASPICAM_AWB_HORIZON:
+            case raspicam::RASPICAM_AWB_HORIZON:
                 return MMAL_PARAM_AWBMODE_HORIZON;
             default:
                 return MMAL_PARAM_AWBMODE_AUTO;
             }
         }
 
-        MMAL_PARAM_IMAGEFX_T cam_still::convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect ) {
+        MMAL_PARAM_IMAGEFX_T cam_still::convertImageEffect ( raspicam::RASPICAM_IMAGE_EFFECT imageEffect ) {
             switch ( imageEffect ) {
             default:
-            case RASPICAM_IMAGE_EFFECT_NONE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_NONE:
                 return MMAL_PARAM_IMAGEFX_NONE;
-            case RASPICAM_IMAGE_EFFECT_NEGATIVE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_NEGATIVE:
                 return MMAL_PARAM_IMAGEFX_NEGATIVE;
-            case RASPICAM_IMAGE_EFFECT_SOLARIZE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_SOLARIZE:
                 return MMAL_PARAM_IMAGEFX_SOLARIZE;
-            case RASPICAM_IMAGE_EFFECT_SKETCH:
+            case raspicam::RASPICAM_IMAGE_EFFECT_SKETCH:
                 return MMAL_PARAM_IMAGEFX_SKETCH;
-            case RASPICAM_IMAGE_EFFECT_DENOISE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_DENOISE:
                 return MMAL_PARAM_IMAGEFX_DENOISE;
-            case RASPICAM_IMAGE_EFFECT_EMBOSS:
+            case raspicam::RASPICAM_IMAGE_EFFECT_EMBOSS:
                 return MMAL_PARAM_IMAGEFX_EMBOSS;
-            case RASPICAM_IMAGE_EFFECT_OILPAINT:
+            case raspicam::RASPICAM_IMAGE_EFFECT_OILPAINT:
                 return MMAL_PARAM_IMAGEFX_OILPAINT;
-            case RASPICAM_IMAGE_EFFECT_HATCH:
+            case raspicam::RASPICAM_IMAGE_EFFECT_HATCH:
                 return MMAL_PARAM_IMAGEFX_HATCH;
-            case RASPICAM_IMAGE_EFFECT_GPEN:
+            case raspicam::RASPICAM_IMAGE_EFFECT_GPEN:
                 return MMAL_PARAM_IMAGEFX_GPEN;
-            case RASPICAM_IMAGE_EFFECT_PASTEL:
+            case raspicam::RASPICAM_IMAGE_EFFECT_PASTEL:
                 return MMAL_PARAM_IMAGEFX_PASTEL;
-            case RASPICAM_IMAGE_EFFECT_WATERCOLOR:
+            case raspicam::RASPICAM_IMAGE_EFFECT_WATERCOLOR:
                 return MMAL_PARAM_IMAGEFX_WATERCOLOUR;
-            case RASPICAM_IMAGE_EFFECT_FILM:
+            case raspicam::RASPICAM_IMAGE_EFFECT_FILM:
                 return MMAL_PARAM_IMAGEFX_FILM;
-            case RASPICAM_IMAGE_EFFECT_BLUR:
+            case raspicam::RASPICAM_IMAGE_EFFECT_BLUR:
                 return MMAL_PARAM_IMAGEFX_BLUR;
-            case RASPICAM_IMAGE_EFFECT_SATURATION:
+            case raspicam::RASPICAM_IMAGE_EFFECT_SATURATION:
                 return MMAL_PARAM_IMAGEFX_SATURATION;
-            case RASPICAM_IMAGE_EFFECT_COLORSWAP:
+            case raspicam::RASPICAM_IMAGE_EFFECT_COLORSWAP:
                 return MMAL_PARAM_IMAGEFX_COLOURSWAP;
-            case RASPICAM_IMAGE_EFFECT_WASHEDOUT:
+            case raspicam::RASPICAM_IMAGE_EFFECT_WASHEDOUT:
                 return MMAL_PARAM_IMAGEFX_WASHEDOUT;
-            case RASPICAM_IMAGE_EFFECT_POSTERISE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_POSTERISE:
                 return MMAL_PARAM_IMAGEFX_POSTERISE;
-            case RASPICAM_IMAGE_EFFECT_COLORPOINT:
+            case raspicam::RASPICAM_IMAGE_EFFECT_COLORPOINT:
                 return MMAL_PARAM_IMAGEFX_COLOURPOINT;
-            case RASPICAM_IMAGE_EFFECT_COLORBALANCE:
+            case raspicam::RASPICAM_IMAGE_EFFECT_COLORBALANCE:
                 return MMAL_PARAM_IMAGEFX_COLOURBALANCE;
-            case RASPICAM_IMAGE_EFFECT_CARTOON:
+            case raspicam::RASPICAM_IMAGE_EFFECT_CARTOON:
                 return MMAL_PARAM_IMAGEFX_CARTOON;
             }
         }

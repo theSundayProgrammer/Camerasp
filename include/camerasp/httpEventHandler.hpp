@@ -4,7 +4,7 @@
 #ifdef RASPICAM_MOCK
 #include <camerasp/raspicamMock.hpp>
 #else
-#include <raspicam/cam_still.hpp>
+#include <camerasp/cam_still.hpp>
 #endif
 #include <via/comms/tcp_adaptor.hpp>
 #include <via/http_server.hpp>
@@ -16,7 +16,7 @@ typedef http_server_type::chunk_type http_chunk_type;
 extern const std::string configPath;
 class Handlers {
 public:
-  Handlers(raspicam::cam_still& Camera);
+  Handlers(camerasp::cam_still& Camera);
 
   void request(
     http_connection::weak_pointer weak_ptr,
@@ -66,6 +66,6 @@ private:
   
   std::pair<via::http::tx_response, std::string> getGETResponse(int k);
   
-  raspicam::cam_still& camera_;
+  camerasp::cam_still& camera_;
 };
 #endif

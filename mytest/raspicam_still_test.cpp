@@ -1,46 +1,14 @@
-/**********************************************************
- Software developed by AVA ( Ava Group of the University of Cordoba, ava  at uco dot es)
- Main author Rafael Munoz Salinas (rmsalinas at uco dot es)
- This software is released under BSD license as expressed below
--------------------------------------------------------------------
-Copyright (c) 2013, AVA ( Ava Group University of Cordoba, ava  at uco dot es)
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. All advertising materials mentioning features or use of this software
-   must display the following acknowledgement:
-
-   This product includes software developed by the Ava group of the University of Cordoba.
-
-4. Neither the name of the University nor the names of its contributors
-   may be used to endorse or promote products derived from this software
-   without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY AVA ''AS IS'' AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL AVA BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-****************************************************************/#include <iostream>
+/****************************************************************/
+#include <iostream>
 #include <fstream>
 #include <cstdlib>
 #include <raspicam/cam_still.hpp>
 #include <unistd.h>
-
+#include <camerasp/parseCmd.hpp>
 using namespace std;
-
+namespace spd = spdlog;
+std::shared_ptr<spd::logger> console;
+std::atomic_flag saved=ATOMIC_FLAG_INIT;
 //Returns the value of a param. If not present, returns the defvalue
 float getParamVal ( string id,int argc,char **argv,float defvalue ) {
     for ( int i=0; i<argc; i++ )
@@ -56,7 +24,11 @@ void usage() {
     cout<<"-h val : sets image height (1944 default)"<<endl;
      cout<<"-iso val: set iso [100,800] (400 default)"<<endl;
 }
-
+void  image_taken(unsigned char * data, unsigned int image_offset, unsigned int length) {
+  ofstream file("picture.bmp", ios::binary);
+  file.write((char*)data, length);
+  saved.clear();
+}
 
 int main ( int argc, char *argv[] ) {
     usage();
@@ -65,7 +37,7 @@ int main ( int argc, char *argv[] ) {
     int height =getParamVal ( "-h",argc,argv,1944 );
     int iso=getParamVal ( "-iso",argc,argv,400);
 
-
+    console = spd::stdout_color_mt("mytest"); 
     cout << "Initializing ..."<<width<<"x"<<height<<endl;
     {
         raspicam::cam_still *camera=new raspicam::cam_still();
@@ -77,42 +49,19 @@ int main ( int argc, char *argv[] ) {
         cout<<"capture"<<endl;
         unsigned int length = camera->getImageBufferSize(); // Header + Image Data + Padding
         unsigned char * data = new unsigned char[length];
-          if ( !camera->grab_retrieve(data, length) ) {
+        saved.test_and_set();
+
+       if ( camera->startCapture(image_taken, data, 0, length)) {
             cerr<<"Error in grab"<<endl;
             return -1;
         }
-    
-        cout<<"saving picture.bmp"<<endl;
-        ofstream file ( "picture.bmp",ios::binary );
-        file.write ( ( char* ) data,   length );
-        cout<<"done"<<endl;
+        cout << "saving picture.bmp" << endl;
+        while (saved.test_and_set()) {}
+        camera->stopCapture();
+        cout << "done" << endl;
+        delete data;
 	delete camera;
     }
-    {
-        unsigned int secs=20;
-        cout<<"capture1"<<endl;
-        //sleep(secs);
-        raspicam::cam_still *camera=new raspicam::cam_still();
-        cout<<"capture2"<<endl;
-        camera->setWidth ( width );
-        cout<<"capture3"<<endl;
-        camera->setHeight ( height );
-        cout<<"capture4"<<endl;
-        camera->open();
-        cout<<"capture5"<<endl;
-        unsigned int length = camera->getImageBufferSize(); // Header + Image Data + Padding
-        unsigned char * data = new unsigned char[length];
-        cout<<"capture0"<<endl;
-          if ( !camera->grab_retrieve(data, length) ) {
-            cerr<<"Error in grab"<<endl;
-            return -1;
-        }
-    
-	delete camera;
-        cout<<"saving picture.bmp"<<endl;
-        ofstream file ( "picture2.bmp",ios::binary );
-        file.write ( ( char* ) data,   length );
-   }
    return 0;
 }
 

@@ -44,7 +44,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MMAL_CAMERA_CAPTURE_PORT 2
 #define STILLS_FRAME_RATE_NUM 3
 #define STILLS_FRAME_RATE_DEN 1
-namespace raspicam {
+namespace camerasp {
         typedef void ( *imageTakenCallback ) ( unsigned char * data, unsigned int image_offset, unsigned int length );
 
         class cam_still {
@@ -67,20 +67,20 @@ namespace raspicam {
             int sharpness; // -100 to 100
             int contrast; // -100 to 100
             int saturation; // -100 to 100
-            RASPICAM_ENCODING encoding;
-            RASPICAM_EXPOSURE exposure;
-            RASPICAM_AWB awb;
-            RASPICAM_IMAGE_EFFECT imageEffect;
-            RASPICAM_METERING metering;
+            raspicam::RASPICAM_ENCODING encoding;
+            raspicam::RASPICAM_EXPOSURE exposure;
+            raspicam::RASPICAM_AWB awb;
+            raspicam::RASPICAM_IMAGE_EFFECT imageEffect;
+            raspicam::RASPICAM_METERING metering;
             bool changedSettings;
             bool horizontalFlip;
             bool verticalFlip;
 
-            MMAL_FOURCC_T convertEncoding ( RASPICAM_ENCODING encoding );
-            MMAL_PARAM_EXPOSUREMETERINGMODE_T convertMetering ( RASPICAM_METERING metering );
-            MMAL_PARAM_EXPOSUREMODE_T convertExposure ( RASPICAM_EXPOSURE exposure );
-            MMAL_PARAM_AWBMODE_T convertAWB ( RASPICAM_AWB awb );
-            MMAL_PARAM_IMAGEFX_T convertImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
+            MMAL_FOURCC_T convertEncoding ( raspicam::RASPICAM_ENCODING encoding );
+            MMAL_PARAM_EXPOSUREMETERINGMODE_T convertMetering ( raspicam::RASPICAM_METERING metering );
+            MMAL_PARAM_EXPOSUREMODE_T convertExposure ( raspicam::RASPICAM_EXPOSURE exposure );
+            MMAL_PARAM_AWBMODE_T convertAWB ( raspicam::RASPICAM_AWB awb );
+            MMAL_PARAM_IMAGEFX_T convertImageEffect ( raspicam::RASPICAM_IMAGE_EFFECT imageEffect );
             void commitBrightness();
             void commitQuality();
             void commitRotation();
@@ -139,11 +139,11 @@ namespace raspicam {
             void setSharpness ( int sharpness );
             void setContrast ( int contrast );
             void setSaturation ( int saturation );
-            void setEncoding ( RASPICAM_ENCODING encoding );
-            void setExposure ( RASPICAM_EXPOSURE exposure );
-            void setAWB ( RASPICAM_AWB awb );
-            void setImageEffect ( RASPICAM_IMAGE_EFFECT imageEffect );
-            void setMetering ( RASPICAM_METERING metering );
+            void setEncoding ( raspicam::RASPICAM_ENCODING encoding );
+            void setExposure ( raspicam::RASPICAM_EXPOSURE exposure );
+            void setAWB ( raspicam::RASPICAM_AWB awb );
+            void setImageEffect ( raspicam::RASPICAM_IMAGE_EFFECT imageEffect );
+            void setMetering ( raspicam::RASPICAM_METERING metering );
             void setHorizontalFlip ( bool hFlip );
             void setVerticalFlip ( bool vFlip );
 
@@ -156,11 +156,11 @@ namespace raspicam {
             int getSharpness();
             int getContrast();
             int getSaturation();
-            RASPICAM_ENCODING getEncoding();
-            RASPICAM_EXPOSURE getExposure();
-            RASPICAM_AWB getAWB();
-            RASPICAM_IMAGE_EFFECT getImageEffect();
-            RASPICAM_METERING getMetering();
+            raspicam::RASPICAM_ENCODING getEncoding();
+            raspicam::RASPICAM_EXPOSURE getExposure();
+            raspicam::RASPICAM_AWB getAWB();
+            raspicam::RASPICAM_IMAGE_EFFECT getImageEffect();
+            raspicam::RASPICAM_METERING getMetering();
             bool isHorizontallyFlipped();
             bool isVerticallyFlipped();
 
@@ -172,4 +172,4 @@ namespace raspicam {
         };
 
 }
-#endif // RASPICAM_H
+#endif // raspicam::RASPICAM_H

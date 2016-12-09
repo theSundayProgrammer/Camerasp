@@ -14,7 +14,6 @@
 #include <cstdarg>
 
 #include <fstream>
-
 //returns the value of a command line param. If not found, defvalue is returned
 bool getParamVal ( std::string param,std::map<std::string,std::string> const& args, bool defvalue ) {
     using namespace std;
@@ -91,7 +90,7 @@ raspicam::RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
 
 namespace Camerasp
 {
-  void processCommandLine(std::map<std::string, std::string> const& nameVal, raspicam::cam_still &Camera) {
+  void processCommandLine(std::map<std::string, std::string> const& nameVal, camerasp::cam_still &Camera) {
     Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
     Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
     Camera.setBrightness(getParamVal("brightness", nameVal, 50));
@@ -120,7 +119,7 @@ namespace Camerasp
 
 
   }
-  void processCommandLine(Json::Value const& nameVal, raspicam::cam_still &Camera) {
+  void processCommandLine(Json::Value const& nameVal, camerasp::cam_still &Camera) {
     Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
     Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
     Camera.setBrightness(getParamVal("brightness", nameVal, 50));
