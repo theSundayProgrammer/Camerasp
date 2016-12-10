@@ -41,11 +41,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "mmal/mmal.h"
 #include "mmal/util/mmal_connection.h"
 #include <string>
+#include <atomic>
 #define MMAL_CAMERA_CAPTURE_PORT 2
 #define STILLS_FRAME_RATE_NUM 3
 #define STILLS_FRAME_RATE_DEN 1
 namespace camerasp {
-        typedef void ( *imageTakenCallback ) ( unsigned char * data, unsigned int image_offset, unsigned int length );
+        typedef void ( *imageTakenCallback ) ( unsigned char * data, int error, unsigned int length );
 
         class cam_still {
 
@@ -163,11 +164,11 @@ namespace camerasp {
             raspicam::RASPICAM_METERING getMetering();
             bool isHorizontallyFlipped();
             bool isVerticallyFlipped();
-
+            std::atomic_flag captured;
 
             //Returns an id of the camera. We assume the camera id is the one of the raspberry
             //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
-            std::string getId() const;
+            static std::string getId() ;
 
         };
 

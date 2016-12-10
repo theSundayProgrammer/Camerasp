@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <raspicam/cam_still.hpp>
+#include <camerasp/cam_still.hpp>
 #include <unistd.h>
 #include <camerasp/parseCmd.hpp>
 using namespace std;
@@ -24,9 +24,11 @@ void usage() {
     cout<<"-h val : sets image height (1944 default)"<<endl;
      cout<<"-iso val: set iso [100,800] (400 default)"<<endl;
 }
-void  image_taken(unsigned char * data, unsigned int image_offset, unsigned int length) {
+void  image_taken(unsigned char * data, int error, unsigned int length) {
+  if (error == 0){
   ofstream file("picture.bmp", ios::binary);
   file.write((char*)data, length);
+  }
   saved.clear();
 }
 
@@ -40,9 +42,9 @@ int main ( int argc, char *argv[] ) {
     console = spd::stdout_color_mt("mytest"); 
     cout << "Initializing ..."<<width<<"x"<<height<<endl;
     {
-        raspicam::cam_still *camera=new raspicam::cam_still();
-        camera->setWidth ( width );
-        camera->setHeight ( height );
+        camerasp::cam_still *camera=new camerasp::cam_still();
+        camera->setWidth ( 2*width );
+        camera->setHeight ( 2*height );
         camera->setISO(iso);
         camera->setEncoding ( raspicam::RASPICAM_ENCODING_BMP );
         camera->open();
@@ -50,7 +52,7 @@ int main ( int argc, char *argv[] ) {
         unsigned int length = camera->getImageBufferSize(); // Header + Image Data + Padding
         unsigned char * data = new unsigned char[length];
         saved.test_and_set();
-
+       console->info("Length = {0}", length);
        if ( camera->startCapture(image_taken, data, 0, length)) {
             cerr<<"Error in grab"<<endl;
             return -1;
@@ -59,7 +61,24 @@ int main ( int argc, char *argv[] ) {
         while (saved.test_and_set()) {}
         camera->stopCapture();
         cout << "done" << endl;
-        delete data;
+        camera->setWidth ( width );
+        camera->setHeight ( height );
+        camera->setISO(iso);
+        camera->setEncoding ( raspicam::RASPICAM_ENCODING_BMP );
+        cout<<"capture"<<endl;
+        length = camera->getImageBufferSize(); // Header + Image Data + Padding
+
+       console->info("Length = {0}", length);
+       if ( camera->startCapture(image_taken, data, 0, length)) {
+            cerr<<"Error in grab"<<endl;
+            return -1;
+        }
+        cout << "saving picture.bmp" << endl;
+        while (saved.test_and_set()) {}
+        cout << "saved picture.bmp" << endl;
+        camera->stopCapture();
+        cout << "done" << endl;
+        delete [] data;
 	delete camera;
     }
    return 0;
