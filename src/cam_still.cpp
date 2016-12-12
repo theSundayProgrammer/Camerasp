@@ -830,7 +830,7 @@ namespace camerasp {
         
         //Returns an id of the camera. We assume the camera id is the one of the raspberry
         //the id is obtained using raspberry serial number obtained in /proc/cpuinfo
-        string cam_still::getId() const{
+        string cam_still::getId() {
             char serial[1024];
             serial[0]='\0';
             ifstream file ( "/proc/cpuinfo" );
