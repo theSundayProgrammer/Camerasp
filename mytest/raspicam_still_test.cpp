@@ -8,7 +8,6 @@
 using namespace std;
 namespace spd = spdlog;
 std::shared_ptr<spd::logger> console;
-std::atomic_flag saved=ATOMIC_FLAG_INIT;
 //Returns the value of a param. If not present, returns the defvalue
 float getParamVal ( string id,int argc,char **argv,float defvalue ) {
     for ( int i=0; i<argc; i++ )
@@ -23,13 +22,6 @@ void usage() {
     cout<<"-w val : sets my image width (2592 default)"<<endl;
     cout<<"-h val : sets image height (1944 default)"<<endl;
      cout<<"-iso val: set iso [100,800] (400 default)"<<endl;
-}
-void  image_taken(unsigned char * data, int error, unsigned int length) {
-  if (error == 0){
-  ofstream file("picture.bmp", ios::binary);
-  file.write((char*)data, length);
-  }
-  saved.clear();
 }
 
 int main ( int argc, char *argv[] ) {
@@ -51,33 +43,14 @@ int main ( int argc, char *argv[] ) {
         cout<<"capture"<<endl;
         unsigned int length = camera->getImageBufferSize(); // Header + Image Data + Padding
         unsigned char * data = new unsigned char[length];
-        saved.test_and_set();
-       console->info("Length = {0}", length);
-       if ( camera->startCapture(image_taken, data, 0, length)) {
-            cerr<<"Error in grab"<<endl;
-            return -1;
+        console->info("Length = {0}", length);
+        for(size_t i =0; i < 1000; ++i){
+          if ( camera->takePicture( data,  length)) {
+              cerr<<"Error in grab"<<endl;
+          } else
+          cout << "done" << endl;
+          usleep(500);
         }
-        cout << "saving picture.bmp" << endl;
-        while (saved.test_and_set()) {}
-        camera->stopCapture();
-        cout << "done" << endl;
-        camera->setWidth ( width );
-        camera->setHeight ( height );
-        camera->setISO(iso);
-        camera->setEncoding ( raspicam::RASPICAM_ENCODING_BMP );
-        cout<<"capture"<<endl;
-        length = camera->getImageBufferSize(); // Header + Image Data + Padding
-
-       console->info("Length = {0}", length);
-       if ( camera->startCapture(image_taken, data, 0, length)) {
-            cerr<<"Error in grab"<<endl;
-            return -1;
-        }
-        cout << "saving picture.bmp" << endl;
-        while (saved.test_and_set()) {}
-        cout << "saved picture.bmp" << endl;
-        camera->stopCapture();
-        cout << "done" << endl;
         delete [] data;
 	delete camera;
     }

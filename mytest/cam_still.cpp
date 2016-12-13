@@ -54,7 +54,6 @@ namespace camerasp
   {
     cam_still *cameraBoard;
     MMAL_POOL_T *encoderPool;
-    imageTakenCallback imageCallback;
     sem_t *mutex;
     unsigned char *data;
     unsigned int bufferPosition;
@@ -81,20 +80,20 @@ namespace camerasp
     MMAL_BUFFER_HEADER_T * buffer)
   {
     RASPICAM_USERDATA *userdata = (RASPICAM_USERDATA *)port->userdata;
+    mmal_buffer_header_mem_lock(buffer);
     if (userdata == NULL || userdata->cameraBoard == NULL) {
+      mmal_buffer_header_mem_unlock(buffer);
       mmal_buffer_header_release(buffer);
       return;
     } else if (buffer->length  + userdata->offset > userdata->length) {
       console->error(API_NAME
         ": Buffer provided {0} was too small offset={1}! Failed to copy data into buffer.", userdata->offset , userdata->length);
-        userdata->imageCallback(userdata->data, -1,
-          userdata->length - userdata->startingOffset);
       userdata->cameraBoard = NULL;
+    mmal_buffer_header_mem_unlock(buffer);
     mmal_buffer_header_release(buffer);
     return;
     } else {
       unsigned int i = 0;
-      mmal_buffer_header_mem_lock(buffer);
       if (userdata->cameraBoard->getEncoding() == raspicam::RASPICAM_ENCODING_RGB)
         for (; i < buffer->length && userdata->bufferPosition < 54 ;
          ++i, ++(userdata->bufferPosition)) {}
@@ -102,20 +101,15 @@ namespace camerasp
           userdata->data[userdata->offset] = buffer->data[i];
           ++userdata->offset;
         }
-      mmal_buffer_header_mem_unlock(buffer);
     }
+    mmal_buffer_header_mem_unlock(buffer);
     const unsigned int END_FLAG =
       MMAL_BUFFER_HEADER_FLAG_FRAME_END |
       MMAL_BUFFER_HEADER_FLAG_TRANSMISSION_FAILED;
     unsigned int flags = buffer->flags;
 
     if (END_FLAG & flags) {
-      if (userdata->mutex == NULL) {
-        userdata->imageCallback(userdata->data, 0,
-          userdata->length - userdata->startingOffset);
-      } else {
         sem_post(userdata->mutex);
-      }
     }
     mmal_buffer_header_release(buffer);
     if (port->is_enabled) {
@@ -422,8 +416,7 @@ namespace camerasp
     return 0;
   }
 
-  bool
-    cam_still::takePicture(unsigned char *preallocated_data,
+    int cam_still::takePicture(unsigned char *preallocated_data,
       unsigned int length)
   {
     initialize();
@@ -439,16 +432,15 @@ namespace camerasp
     userdata->offset = 0;
     userdata->startingOffset = 0;
     userdata->length = length;
-    userdata->imageCallback = NULL;
     encoder_output_port->userdata = (struct MMAL_PORT_USERDATA_T *) userdata;
     if (startCapture()) {
       sem_destroy(&mutex);
-      return false;
+      return -1;
     }
     sem_wait(&mutex);
     sem_destroy(&mutex);
     stopCapture();
-    return true;
+    return 0;
   }
 
   size_t cam_still::getImageBufferSize() const
@@ -456,25 +448,6 @@ namespace camerasp
     return width * height * 3 + 54;	//oversize the buffer so to fit BMP images
   }
 
-  int  cam_still::startCapture(
-      imageTakenCallback userCallback,
-      unsigned char *preallocated_data,
-      unsigned int offset, unsigned int length)  {
-    RASPICAM_USERDATA *userdata = new RASPICAM_USERDATA();
-    userdata->cameraBoard = this;
-    userdata->encoderPool = encoder_pool;
-    userdata->mutex = NULL;
-    userdata->data = preallocated_data;
-    userdata->bufferPosition = 0;
-    userdata->offset = offset;
-    userdata->startingOffset = offset;
-    userdata->length = length;
-    userdata->imageCallback = userCallback;
-    while (captured.test_and_set()) { }
-    encoder_output_port->userdata = (struct MMAL_PORT_USERDATA_T *) userdata;
-    startCapture();
-    return 0;
-  }
 
   int cam_still::startCapture() {
     // If the parameters were changed and this function wasn't called, it will be called here
@@ -985,11 +958,5 @@ namespace camerasp
     return initialize() == 0;
   }
 
-  bool
-    cam_still::grab_retrieve(
-      unsigned char *preallocated_data,
-      unsigned int length)  {
-    return takePicture(preallocated_data, length);
-  }
 
 }

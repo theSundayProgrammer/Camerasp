@@ -39,6 +39,7 @@ namespace Camerasp {
 //#else
 //   "C:\\Users\\Public\\Pictures\\Camerasp\\backUp";
 //#endif
+
   //need a better way of handling file save
   static void save_file(int file_number) {
     buffer_t buffer;
@@ -51,14 +52,15 @@ namespace Camerasp {
       save_image(buffer, pathname_prefix + intstr + ".jpg");
       --pending_count;
   }
+
   static std::vector<unsigned char> grabPicture(camerasp::cam_still& camera_)  {
     //At any point in time only one instance of this function will be running
     Camerasp::ImgInfo info;
+    console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
     int siz = camera_.getImageBufferSize();
     info.buffer.resize(siz);
-    camera_.grab_retrieve((unsigned char*)(&info.buffer[0]),siz);
+    camera_.takePicture((unsigned char*)(&info.buffer[0]),siz);
     info.image_height = camera_.getHeight();
-    console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
     info.image_width = camera_.getWidth();
     info.quality = 100;
     info.row_stride = info.image_width * 3;

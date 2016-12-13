@@ -122,10 +122,10 @@ namespace camerasp {
             bool open ( );
             //Grabs and set the data into the data buffer which has the indicated length. It is your responsability
             // to alloc the buffer. You can use getImageBufferSize for that matter.
-            bool grab_retrieve ( unsigned char * data, unsigned int length );
+            //bool grab_retrieve ( unsigned char * data, unsigned int length );
             int startCapture ( imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length );
             void stopCapture();
-            bool takePicture ( unsigned char * preallocated_data, unsigned int length );
+            int takePicture ( unsigned char * preallocated_data, unsigned int length );
 	    void release(); 
 	        size_t getImageBufferSize() const;
             void bufferCallback ( MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer );
