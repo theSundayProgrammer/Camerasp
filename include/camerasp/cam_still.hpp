@@ -101,23 +101,16 @@ namespace camerasp {
             void destroyEncoder();
             void setDefaults();
             MMAL_STATUS_T connectPorts ( MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection );
+            void setEncoding ( raspicam::RASPICAM_ENCODING encoding );
 
 	    bool _isInitialized;
+
+
+
+
             public:
-            ~cam_still() {
-               release();
-               }
-            cam_still() {
-                setDefaults();
-                camera = NULL;
-                encoder = NULL;
-                encoder_connection = NULL;
-                encoder_pool = NULL;
-                camera_still_port = NULL;
-                encoder_input_port = NULL;
-                encoder_output_port = NULL;
-		_isInitialized=false;
-            }
+            ~cam_still() ;
+            cam_still() ;
             int initialize();
             bool open ( );
             //Grabs and set the data into the data buffer which has the indicated length. It is your responsability
@@ -140,7 +133,6 @@ namespace camerasp {
             void setSharpness ( int sharpness );
             void setContrast ( int contrast );
             void setSaturation ( int saturation );
-            void setEncoding ( raspicam::RASPICAM_ENCODING encoding );
             void setExposure ( raspicam::RASPICAM_EXPOSURE exposure );
             void setAWB ( raspicam::RASPICAM_AWB awb );
             void setImageEffect ( raspicam::RASPICAM_IMAGE_EFFECT imageEffect );

@@ -94,9 +94,6 @@ namespace camerasp
     return;
     } else {
       unsigned int i = 0;
-      if (userdata->cameraBoard->getEncoding() == raspicam::RASPICAM_ENCODING_RGB)
-        for (; i < buffer->length && userdata->bufferPosition < 54 ;
-         ++i, ++(userdata->bufferPosition)) {}
       for (; i < buffer->length; ++i ) {
           userdata->data[userdata->offset] = buffer->data[i];
           ++userdata->offset;
@@ -120,6 +117,20 @@ namespace camerasp
     }
   }
 
+        cam_still::~cam_still() {
+           release();
+        }
+        cam_still::cam_still() {
+            setDefaults();
+            camera = NULL;
+            encoder = NULL;
+            encoder_connection = NULL;
+            encoder_pool = NULL;
+            camera_still_port = NULL;
+            encoder_input_port = NULL;
+            encoder_output_port = NULL;
+		_isInitialized=false;
+        }
   void cam_still::setDefaults() {
     width = 640;
     height = 480;
