@@ -20,10 +20,13 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 #include <asio.hpp>
 #include <chrono>
 #include <jpeg/jpgrdwr.h>
-#include <spdlog/spdlog.h>
 #include <json/reader.h>
-extern std::shared_ptr<spdlog::logger> console;
+#include <camerasp/commonUtils.hpp>
 
+#ifdef __GNUC__
+typedef int errno_t;
+errno_t fopen_s(FILE** fp, const char* name, const char* mode);
+#endif
 namespace Camerasp{
   std::string lowerCase(std::string const& str);
   void processCommandLine(
