@@ -38,7 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _RASPICAM_TYPES_H
 #define _RASPICAM_TYPES_H
 
-namespace raspicam {
+namespace camerasp {
 
     /**Image formats
      */

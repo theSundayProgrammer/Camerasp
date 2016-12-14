@@ -27,7 +27,7 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 typedef int errno_t;
 errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 #endif
-namespace Camerasp{
+namespace camerasp{
   std::string lowerCase(std::string const& str);
   void processCommandLine(
     Json::Value const &,

@@ -43,7 +43,7 @@ namespace
         dest->buffer.resize(dest->buffer.size() - cinfo->dest->free_in_buffer);
     }
 }
-namespace Camerasp
+namespace camerasp
 {
     std::vector<unsigned char> write_JPEG_dat (ImgInfo const& img)
     {

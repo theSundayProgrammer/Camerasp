@@ -2,7 +2,7 @@
 #include <vector>
 #include <jpeg\jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
-namespace raspicam
+namespace camerasp
 {
   cam_still::cam_still(void) { console->debug("RaspiCam"); }
   cam_still::~cam_still(void) { console->debug("~RaspiCam"); }
@@ -20,18 +20,15 @@ namespace raspicam
   void  cam_still::setShutterSpeed(unsigned int) { console->debug("setShutterSpeed"); }
   void  cam_still::setAWB(enum RASPICAM_AWB) { console->debug("setAWB"); }
   void  cam_still::setAWB_RB(float, float) { console->debug("setAWB_RB"); }
-  void  cam_still::startCapture() { console->debug("startCapture"); }
   void  cam_still::stopCapture() { console->debug("stopCapture"); }
   void  cam_still::commitParameters() { console->debug("commitParameters"); }
   unsigned int  cam_still::getImageBufferSize(void)const { console->debug("getImageBufferSize"); return 3 * this->height*this->width; }
   unsigned int  cam_still::getWidth(void)const { console->debug("getWidth"); return width; }
   unsigned int  cam_still::getHeight(void)const { console->debug("getHeight"); return height; }
-  void cam_still::grab_retrieve(unsigned char *,unsigned int) { console->debug("retrieve"); }
+  int cam_still::takePicture(unsigned char *, unsigned int) { console->debug("retrieve"); return 0; }
   bool cam_still::open(bool) { console->debug("open"); return true; }
 
-}
-namespace Camerasp{
-  std::vector<unsigned char> write_JPEG_dat(struct Camerasp::ImgInfo const &dat)  {
+  std::vector<unsigned char> write_JPEG_dat(struct camerasp::ImgInfo const &dat)  {
     std::vector<unsigned char> buffer;
     FILE *fp = nullptr;
     fopen_s(&fp, "C:\\Users\\Public\\Pictures\\figure_3.jpg", "rb");

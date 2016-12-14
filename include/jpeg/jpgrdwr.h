@@ -11,7 +11,7 @@ typedef JSAMPLE* JSAMPROW;
 #include <string>
 #include <vector>
 #include <iterator>
-namespace Camerasp
+namespace camerasp
 {
     struct ImgInfo
     {

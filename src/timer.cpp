@@ -16,7 +16,7 @@
 #include <atomic>
 #include <stdlib.h>
 
-namespace Camerasp {
+namespace camerasp {
   const unsigned int maxSize = 100;
   std::atomic<int> pending_count;
   unsigned int curImg = 0;
@@ -55,7 +55,7 @@ namespace Camerasp {
 
   static std::vector<unsigned char> grabPicture(camerasp::cam_still& camera_)  {
     //At any point in time only one instance of this function will be running
-    Camerasp::ImgInfo info;
+    camerasp::ImgInfo info;
     console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
     int siz = camera_.getImageBufferSize();
     info.buffer.resize(siz);

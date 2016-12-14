@@ -100,7 +100,7 @@ int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
   namespace spd = spdlog;
   std::string app_name(argv[0]);
-  Json::Value root = Camerasp::getDOM(configPath + "options.json");
+  Json::Value root = camerasp::getDOM(configPath + "options.json");
   Json::Value log_config = root["Logging"];
   Json::Value json_path = log_config["path"];
   logpath = json_path.asString();
@@ -109,10 +109,10 @@ int main(int /* argc */, char* argv[]){
   console = spd::rotating_logger_mt("console", logpath, 1024*1024* size_mega_bytes, count_files);
 
   Json::Value backup = root["Data"];
-  Camerasp::max_file_count = backup["count"].asInt();
+  camerasp::max_file_count = backup["count"].asInt();
   int secs = backup["sample_period"].asInt();
-  Camerasp::samplingPeriod = std::chrono::seconds(secs);
-  Camerasp::pathname_prefix = backup["path_prefix"].asString();
+  camerasp::samplingPeriod = std::chrono::seconds(secs);
+  camerasp::pathname_prefix = backup["path_prefix"].asString();
   //console = spd::stdout_color_mt("console");
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
@@ -125,7 +125,7 @@ int main(int /* argc */, char* argv[]){
         console->critical("Unable to read Json");
         return 1;
       }
-      Camerasp::processCommandLine(camera_config, camera);
+      camerasp::processCommandLine(camera_config, camera);
       if (!camera.open()) {
         console->critical("Error opening camera");
         return -1;
@@ -133,8 +133,8 @@ int main(int /* argc */, char* argv[]){
       asio::io_service io_service;
       pService = &io_service;
       //Begin Camera Capture
-      Camerasp::high_resolution_timer timer(io_service);
-      Camerasp::setTimer(timer,camera);
+      camerasp::high_resolution_timer timer(io_service);
+      camerasp::setTimer(timer,camera);
       // Create the HTTP server, attach the request handler
       http_server_type http_server(io_service);
       Handlers handler(camera);
@@ -176,7 +176,7 @@ int main(int /* argc */, char* argv[]){
       // register the handle_stop callback
       signals_.async_wait([&]
       (ASIO_ERROR_CODE const& error, int signal_number)  { 
-        Camerasp::stopCapture();
+        camerasp::stopCapture();
         handle_stop(error, signal_number, http_server); 
         io_service.stop();
       });

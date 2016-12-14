@@ -49,47 +49,47 @@ int getParamVal(std::string param, Json::Value const& item, int defvalue) {
   else  
     return  defvalue;
   }
-
-
-raspicam::RASPICAM_EXPOSURE getExposureFromString (const  std::string& str ) {
-    if ( str=="OFF" ) return raspicam::RASPICAM_EXPOSURE_OFF;
-    if ( str=="AUTO" ) return raspicam::RASPICAM_EXPOSURE_AUTO;
-    if ( str=="NIGHT" ) return raspicam::RASPICAM_EXPOSURE_NIGHT;
-    if ( str=="NIGHTPREVIEW" ) return raspicam::RASPICAM_EXPOSURE_NIGHTPREVIEW;
-    if ( str=="BACKLIGHT" ) return raspicam::RASPICAM_EXPOSURE_BACKLIGHT;
-    if ( str=="SPOTLIGHT" ) return raspicam::RASPICAM_EXPOSURE_SPOTLIGHT;
-    if ( str=="SPORTS" ) return raspicam::RASPICAM_EXPOSURE_SPORTS;
-    if ( str=="SNOW" ) return raspicam::RASPICAM_EXPOSURE_SNOW;
-    if ( str=="BEACH" ) return raspicam::RASPICAM_EXPOSURE_BEACH;
-    if ( str=="VERYLONG" ) return raspicam::RASPICAM_EXPOSURE_VERYLONG;
-    if ( str=="FIXEDFPS" ) return raspicam::RASPICAM_EXPOSURE_FIXEDFPS;
-    if ( str=="ANTISHAKE" ) return raspicam::RASPICAM_EXPOSURE_ANTISHAKE;
-    if ( str=="FIREWORKS" ) return raspicam::RASPICAM_EXPOSURE_FIREWORKS;
-    return raspicam::RASPICAM_EXPOSURE_AUTO;
-}
-
-raspicam::RASPICAM_AWB getAwbFromString ( const std::string& str ) {
-if ( str=="OFF" ) return raspicam::RASPICAM_AWB_OFF;
-if ( str=="AUTO" ) return raspicam::RASPICAM_AWB_AUTO;
-if ( str=="SUNLIGHT" ) return raspicam::RASPICAM_AWB_SUNLIGHT;
-if ( str=="CLOUDY" ) return raspicam::RASPICAM_AWB_CLOUDY;
-if ( str=="SHADE" ) return raspicam::RASPICAM_AWB_SHADE;
-if ( str=="TUNGSTEN" ) return raspicam::RASPICAM_AWB_TUNGSTEN;
-if ( str=="FLUORESCENT" ) return raspicam::RASPICAM_AWB_FLUORESCENT;
-if ( str=="INCANDESCENT" ) return raspicam::RASPICAM_AWB_INCANDESCENT;
-if ( str=="FLASH" ) return raspicam::RASPICAM_AWB_FLASH;
-if ( str=="HORIZON" ) return raspicam::RASPICAM_AWB_HORIZON;
-return raspicam::RASPICAM_AWB_AUTO;
-}
-raspicam::RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
-    if(str=="GREY") return raspicam::RASPICAM_FORMAT_GRAY;
-    if(str=="YUV") return raspicam::RASPICAM_FORMAT_YUV420;
-    return raspicam::RASPICAM_FORMAT_RGB;
-
-}
-
-namespace Camerasp
+namespace camerasp
 {
+
+RASPICAM_EXPOSURE getExposureFromString (const  std::string& str ) {
+    if ( str=="OFF" ) return RASPICAM_EXPOSURE_OFF;
+    if ( str=="AUTO" ) return RASPICAM_EXPOSURE_AUTO;
+    if ( str=="NIGHT" ) return RASPICAM_EXPOSURE_NIGHT;
+    if ( str=="NIGHTPREVIEW" ) return RASPICAM_EXPOSURE_NIGHTPREVIEW;
+    if ( str=="BACKLIGHT" ) return RASPICAM_EXPOSURE_BACKLIGHT;
+    if ( str=="SPOTLIGHT" ) return RASPICAM_EXPOSURE_SPOTLIGHT;
+    if ( str=="SPORTS" ) return RASPICAM_EXPOSURE_SPORTS;
+    if ( str=="SNOW" ) return RASPICAM_EXPOSURE_SNOW;
+    if ( str=="BEACH" ) return RASPICAM_EXPOSURE_BEACH;
+    if ( str=="VERYLONG" ) return RASPICAM_EXPOSURE_VERYLONG;
+    if ( str=="FIXEDFPS" ) return RASPICAM_EXPOSURE_FIXEDFPS;
+    if ( str=="ANTISHAKE" ) return RASPICAM_EXPOSURE_ANTISHAKE;
+    if ( str=="FIREWORKS" ) return RASPICAM_EXPOSURE_FIREWORKS;
+    return RASPICAM_EXPOSURE_AUTO;
+}
+
+RASPICAM_AWB getAwbFromString ( const std::string& str ) {
+if ( str=="OFF" ) return RASPICAM_AWB_OFF;
+if ( str=="AUTO" ) return RASPICAM_AWB_AUTO;
+if ( str=="SUNLIGHT" ) return RASPICAM_AWB_SUNLIGHT;
+if ( str=="CLOUDY" ) return RASPICAM_AWB_CLOUDY;
+if ( str=="SHADE" ) return RASPICAM_AWB_SHADE;
+if ( str=="TUNGSTEN" ) return RASPICAM_AWB_TUNGSTEN;
+if ( str=="FLUORESCENT" ) return RASPICAM_AWB_FLUORESCENT;
+if ( str=="INCANDESCENT" ) return RASPICAM_AWB_INCANDESCENT;
+if ( str=="FLASH" ) return RASPICAM_AWB_FLASH;
+if ( str=="HORIZON" ) return RASPICAM_AWB_HORIZON;
+return RASPICAM_AWB_AUTO;
+}
+RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
+    if(str=="GREY") return RASPICAM_FORMAT_GRAY;
+    if(str=="YUV") return RASPICAM_FORMAT_YUV420;
+    return RASPICAM_FORMAT_RGB;
+
+}
+
+
   void processCommandLine(std::map<std::string, std::string> const& nameVal, camerasp::cam_still &Camera) {
     Camera.setWidth(getParamVal("width", nameVal, 640)); //max 1280
     Camera.setHeight(getParamVal("height", nameVal, 480)); //max 960
@@ -103,9 +103,9 @@ namespace Camerasp
     //Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
     auto it = nameVal.find("format");
-    raspicam::RASPICAM_FORMAT fmt = (it != end(nameVal)) ?
+    RASPICAM_FORMAT fmt = (it != end(nameVal)) ?
       getFormatFromString(it->second) :
-      raspicam::RASPICAM_FORMAT_RGB;
+      RASPICAM_FORMAT_RGB;
     //Camera.setFormat(fmt);
     it = nameVal.find("exposure");
     if (it != end(nameVal))
@@ -131,7 +131,7 @@ namespace Camerasp
     Camera.setISO(getParamVal("iso", nameVal, 400));
     //Camera.setExposureCompensation(getParamVal("ec", nameVal, 0));
 
-    raspicam::RASPICAM_FORMAT fmt =  raspicam::RASPICAM_FORMAT_RGB;
+    RASPICAM_FORMAT fmt =  RASPICAM_FORMAT_RGB;
     //Camera.setFormat(fmt);
 
   }

@@ -216,7 +216,7 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
       response.add_date_header();
       console->info("image number={0}",k);
       response.add_header("Content-Type", "image/jpeg");
-      std::string responsebody = Camerasp::getImage(k);
+      std::string responsebody = camerasp::getImage(k);
       response.add_content_length_header(responsebody.size());
       return std::make_pair(response,responsebody );
   }
