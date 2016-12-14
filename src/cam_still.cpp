@@ -40,7 +40,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <fstream>
 #include <camerasp/cam_still.hpp>
+#include <mmal/mmal.h>
 #include <mmal/mmal_buffer.h>
+#include <mmal/util/mmal_connection.h>
 #include <mmal/util/mmal_default_components.h>
 #include <mmal/util/mmal_util.h>
 #include <mmal/util/mmal_util_params.h>
@@ -52,12 +54,9 @@ namespace camerasp
 {
   typedef struct
   {
-    cam_still *cameraBoard;
     MMAL_POOL_T *encoderPool;
     sem_t *mutex;
     unsigned char *data;
-    unsigned int bufferPosition;
-    unsigned int startingOffset;
     unsigned int offset;
     unsigned int length;
   } RASPICAM_USERDATA;
@@ -81,14 +80,13 @@ namespace camerasp
   {
     RASPICAM_USERDATA *userdata = (RASPICAM_USERDATA *)port->userdata;
     mmal_buffer_header_mem_lock(buffer);
-    if (userdata == NULL || userdata->cameraBoard == NULL) {
+    if (userdata == NULL) {
       mmal_buffer_header_mem_unlock(buffer);
       mmal_buffer_header_release(buffer);
       return;
     } else if (buffer->length  + userdata->offset > userdata->length) {
       console->error(API_NAME
         ": Buffer provided {0} was too small offset={1}! Failed to copy data into buffer.", userdata->offset , userdata->length);
-      userdata->cameraBoard = NULL;
     mmal_buffer_header_mem_unlock(buffer);
     mmal_buffer_header_release(buffer);
     return;
@@ -435,13 +433,10 @@ namespace camerasp
     sem_t mutex;
     sem_init(&mutex, 0, 0);
     RASPICAM_USERDATA *userdata = new RASPICAM_USERDATA();
-    userdata->cameraBoard = this;
     userdata->encoderPool = encoder_pool;
     userdata->mutex = &mutex;
     userdata->data = preallocated_data;
-    userdata->bufferPosition = 0;
     userdata->offset = 0;
-    userdata->startingOffset = 0;
     userdata->length = length;
     encoder_output_port->userdata = (struct MMAL_PORT_USERDATA_T *) userdata;
     if (startCapture()) {
