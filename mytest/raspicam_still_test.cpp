@@ -44,7 +44,7 @@ int main ( int argc, char *argv[] ) {
         unsigned char * data = new unsigned char[length];
         console->info("Length = {0}", length);
         
-        for(size_t i =0; i < 1; ++i)
+        for(size_t i =0; i < 2; ++i)
           if ( camera->takePicture( data,  &length)) {
               cerr<<"Error in grab"<<endl;
           } else{
@@ -53,6 +53,7 @@ int main ( int argc, char *argv[] ) {
             ofstream ofs(filename,ios::binary);
             ofs.write((char*)data,length);
             cout << "length="<< length << endl;
+            camera->setExposure(camerasp::RASPICAM_EXPOSURE_NIGHT);
             usleep(500);
         }
         delete [] data;
