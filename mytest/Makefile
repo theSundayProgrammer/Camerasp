@@ -1,6 +1,6 @@
 
 INCLUDES = -I ../include -I . 
-CXX_FLAGS = -pthread -DASIO_STANDALONE
+CXX_FLAGS = -pthread 
 BUILD_DIR=./build
 CXX=g++-6
 
@@ -10,21 +10,20 @@ all : camerasp
 http:
 	$(MAKE) -C $@
 
-srcs = $(wildcard *.cpp)
-objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
-deps = $(srcs:.cpp=$(BUILD_DIR)/.d)
 
-camerasp: $(objs)
+camerasp: $(BUILD_DIR)/raspicam_still_test.o $(BUILD_DIR)/cam_still.o    
 	$(CXX)   -o $@ $^ -pthread -L/opt/vc/lib -lmmal -lmmal_core -lmmal_util 
 
-$(BUILD_DIR)/%.o: %.cpp
-	$(CXX) $(CXX_FLAGS) $(INCLUDES) $(OPTIONS) -MMD -MP -c $< -o $@
+$(BUILD_DIR)/cam_still.o: ../src/cam_still.cpp
+	$(CXX) $(CXX_FLAGS) $(INCLUDES)   -c $< -o $@
+
+$(BUILD_DIR)/raspicam_still_test.o: raspicam_still_test.cpp
+	$(CXX) $(CXX_FLAGS) $(INCLUDES)   -c $< -o $@
 
 .PHONY: clean
 
 # $(RM) is rm -f by default
 clean:
-	$(RM) $(objs) $(deps) camerasp
+	$(RM) $(BUILD_DIR)/*.o  camerasp
 
--include $(deps)
 

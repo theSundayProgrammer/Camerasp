@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <camerasp/cam_still.hpp>
 #include <unistd.h>
-#include <camerasp/parseCmd.hpp>
+#include <camerasp/commonUtils.hpp>
 using namespace std;
 namespace spd = spdlog;
 std::shared_ptr<spd::logger> console;

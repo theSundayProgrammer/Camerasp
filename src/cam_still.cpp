@@ -47,7 +47,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <mmal/util/mmal_util.h>
 #include <mmal/util/mmal_util_params.h>
 #include <semaphore.h>
-#include <camerasp/parseCmd.hpp>
+#include <camerasp/commonUtils.hpp>
 using namespace std;
 #define API_NAME  "raspicam_still"
 namespace camerasp
