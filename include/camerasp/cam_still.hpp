@@ -38,10 +38,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _Private_RaspiCam_STILL_IMPL_H
 #define _Private_RaspiCam_STILL_IMPL_H
 #include "raspicamtypes.h"
-#include "mmal/mmal.h"
-#include "mmal/util/mmal_connection.h"
 #include <string>
 #include <atomic>
+#include <mmal/mmal.h>
+struct MMAL_COMPONENT_T ;
+struct MMAL_CONNECTION_T;   
+struct MMAL_POOL_T;   
+struct MMAL_PORT_T;   
 #define MMAL_CAMERA_CAPTURE_PORT 2
 #define STILLS_FRAME_RATE_NUM 3
 #define STILLS_FRAME_RATE_DEN 1
