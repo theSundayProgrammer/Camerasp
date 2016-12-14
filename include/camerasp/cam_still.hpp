@@ -71,20 +71,20 @@ namespace camerasp {
     int sharpness; // -100 to 100
     int contrast; // -100 to 100
     int saturation; // -100 to 100
-    raspicam::RASPICAM_ENCODING encoding;
-    raspicam::RASPICAM_EXPOSURE exposure;
-    raspicam::RASPICAM_AWB awb;
-    raspicam::RASPICAM_IMAGE_EFFECT imageEffect;
-    raspicam::RASPICAM_METERING metering;
+    RASPICAM_ENCODING encoding;
+    RASPICAM_EXPOSURE exposure;
+    RASPICAM_AWB awb;
+    RASPICAM_IMAGE_EFFECT imageEffect;
+    RASPICAM_METERING metering;
     bool changedSettings;
     bool horizontalFlip;
     bool verticalFlip;
 
-    MMAL_FOURCC_T convertEncoding(raspicam::RASPICAM_ENCODING encoding);
-    MMAL_PARAM_EXPOSUREMETERINGMODE_T convertMetering(raspicam::RASPICAM_METERING metering);
-    MMAL_PARAM_EXPOSUREMODE_T convertExposure(raspicam::RASPICAM_EXPOSURE exposure);
-    MMAL_PARAM_AWBMODE_T convertAWB(raspicam::RASPICAM_AWB awb);
-    MMAL_PARAM_IMAGEFX_T convertImageEffect(raspicam::RASPICAM_IMAGE_EFFECT imageEffect);
+    MMAL_FOURCC_T convertEncoding(RASPICAM_ENCODING encoding);
+    MMAL_PARAM_EXPOSUREMETERINGMODE_T convertMetering(RASPICAM_METERING metering);
+    MMAL_PARAM_EXPOSUREMODE_T convertExposure(RASPICAM_EXPOSURE exposure);
+    MMAL_PARAM_AWBMODE_T convertAWB(RASPICAM_AWB awb);
+    MMAL_PARAM_IMAGEFX_T convertImageEffect(RASPICAM_IMAGE_EFFECT imageEffect);
     void commitBrightness();
     void commitQuality();
     void commitRotation();
@@ -104,7 +104,7 @@ namespace camerasp {
     void destroyEncoder();
     void setDefaults();
     MMAL_STATUS_T connectPorts(MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection);
-    void setEncoding(raspicam::RASPICAM_ENCODING encoding);
+    void setEncoding(RASPICAM_ENCODING encoding);
 
     bool _isInitialized;
 
@@ -136,10 +136,10 @@ namespace camerasp {
     void setSharpness(int sharpness);
     void setContrast(int contrast);
     void setSaturation(int saturation);
-    void setExposure(raspicam::RASPICAM_EXPOSURE exposure);
-    void setAWB(raspicam::RASPICAM_AWB awb);
-    void setImageEffect(raspicam::RASPICAM_IMAGE_EFFECT imageEffect);
-    void setMetering(raspicam::RASPICAM_METERING metering);
+    void setExposure(RASPICAM_EXPOSURE exposure);
+    void setAWB(RASPICAM_AWB awb);
+    void setImageEffect(RASPICAM_IMAGE_EFFECT imageEffect);
+    void setMetering(RASPICAM_METERING metering);
     void setHorizontalFlip(bool hFlip);
     void setVerticalFlip(bool vFlip);
 
@@ -152,11 +152,11 @@ namespace camerasp {
     int getSharpness();
     int getContrast();
     int getSaturation();
-    raspicam::RASPICAM_ENCODING getEncoding();
-    raspicam::RASPICAM_EXPOSURE getExposure();
-    raspicam::RASPICAM_AWB getAWB();
-    raspicam::RASPICAM_IMAGE_EFFECT getImageEffect();
-    raspicam::RASPICAM_METERING getMetering();
+    RASPICAM_ENCODING getEncoding();
+    RASPICAM_EXPOSURE getExposure();
+    RASPICAM_AWB getAWB();
+    RASPICAM_IMAGE_EFFECT getImageEffect();
+    RASPICAM_METERING getMetering();
     bool isHorizontallyFlipped();
     bool isVerticallyFlipped();
     std::atomic_flag captured;
@@ -168,4 +168,4 @@ namespace camerasp {
   };
 
 }
-#endif // raspicam::RASPICAM_H
+#endif // RASPICAM_H
