@@ -57,9 +57,9 @@ namespace camerasp {
     //At any point in time only one instance of this function will be running
     camerasp::ImgInfo info;
     console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
-    int siz = camera_.getImageBufferSize();
+    auto siz = camera_.getImageBufferSize();
     info.buffer.resize(siz);
-    camera_.takePicture((unsigned char*)(&info.buffer[0]),siz);
+    camera_.takePicture((unsigned char*)(&info.buffer[0]),&siz);
     info.image_height = camera_.getHeight();
     info.image_width = camera_.getWidth();
     info.quality = 100;

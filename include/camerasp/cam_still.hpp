@@ -104,7 +104,6 @@ namespace camerasp {
     void destroyEncoder();
     void setDefaults();
     MMAL_STATUS_T connectPorts(MMAL_PORT_T *output_port, MMAL_PORT_T *input_port, MMAL_CONNECTION_T **connection);
-    void setEncoding(RASPICAM_ENCODING encoding);
 
     bool _isInitialized;
 
@@ -115,16 +114,11 @@ namespace camerasp {
     ~cam_still();
     cam_still();
     int initialize();
-    bool open();
-    //Grabs and set the data into the data buffer which has the indicated length. It is your responsability
-    // to alloc the buffer. You can use getImageBufferSize for that matter.
-    //bool grab_retrieve ( unsigned char * data, unsigned int length );
-    //int startCapture(imageTakenCallback userCallback, unsigned char * preallocated_data, unsigned int offset, unsigned int length);
-    void stopCapture();
-    int takePicture(unsigned char * preallocated_data, unsigned int length);
     void release();
-    size_t getImageBufferSize() const;
-    //void bufferCallback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer);
+    bool open();
+    int takePicture(unsigned char * preallocated_data, unsigned int* length);
+    void stopCapture();
+
     void commitParameters();
     void setWidth(unsigned int width);
     void setHeight(unsigned int height);
@@ -142,9 +136,11 @@ namespace camerasp {
     void setMetering(RASPICAM_METERING metering);
     void setHorizontalFlip(bool hFlip);
     void setVerticalFlip(bool vFlip);
+    void setEncoding(RASPICAM_ENCODING encoding);
 
     unsigned int getWidth();
     unsigned int getHeight();
+    size_t getImageBufferSize() const;
     unsigned int getBrightness();
     unsigned int getRotation();
     unsigned int getQuality();
@@ -159,7 +155,6 @@ namespace camerasp {
     RASPICAM_METERING getMetering();
     bool isHorizontallyFlipped();
     bool isVerticallyFlipped();
-    std::atomic_flag captured;
 
     //Returns an id of the camera. We assume the camera id is the one of the raspberry
     //the id is obtained using raspberry serial number obtained in /proc/cpuinfo

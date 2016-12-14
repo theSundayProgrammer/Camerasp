@@ -43,15 +43,16 @@ int main ( int argc, char *argv[] ) {
         unsigned int length = camera->getImageBufferSize(); // Header + Image Data + Padding
         unsigned char * data = new unsigned char[length];
         console->info("Length = {0}", length);
-        for(size_t i =0; i < 1000; ++i)
-          if ( camera->takePicture( data,  length)) {
+        
+        for(size_t i =0; i < 1; ++i)
+          if ( camera->takePicture( data,  &length)) {
               cerr<<"Error in grab"<<endl;
           } else{
             char filename[32];
             sprintf(filename,"out%d.bmp",i%100); 
             ofstream ofs(filename,ios::binary);
             ofs.write((char*)data,length);
-            cout << "done" << endl;
+            cout << "length="<< length << endl;
             usleep(500);
         }
         delete [] data;

@@ -426,7 +426,7 @@ namespace camerasp
   }
 
     int cam_still::takePicture(unsigned char *preallocated_data,
-      unsigned int length)
+      unsigned int *length)
   {
     initialize();
     int ret = 0;
@@ -437,7 +437,7 @@ namespace camerasp
     userdata->mutex = &mutex;
     userdata->data = preallocated_data;
     userdata->offset = 0;
-    userdata->length = length;
+    userdata->length = *length;
     encoder_output_port->userdata = (struct MMAL_PORT_USERDATA_T *) userdata;
     if (startCapture()) {
       sem_destroy(&mutex);
@@ -446,6 +446,7 @@ namespace camerasp
     sem_wait(&mutex);
     sem_destroy(&mutex);
     stopCapture();
+    *length =  userdata->offset ;
     return 0;
   }
 
@@ -498,7 +499,6 @@ namespace camerasp
       return;
     if (mmal_port_disable(encoder_output_port))
       delete (RASPICAM_USERDATA *)encoder_output_port->userdata;
-    captured.clear();
   }
 
   void cam_still::setWidth(unsigned int width)  {
