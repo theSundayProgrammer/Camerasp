@@ -7,7 +7,7 @@ CXX=g++-6
 srcs = $(wildcard *.cpp)
 objs = $(srcs:%.cpp=$(BUILD_DIR)/%.o)
 
-../../lib/libvia-http.a: $(objs)
+../../lib/libjson.a: $(objs)
 	ar rcs $@ $^
 
 $(BUILD_DIR)/%.o: %.cpp
