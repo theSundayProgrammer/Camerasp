@@ -15,8 +15,7 @@
 #include <mutex>
 #include <atomic>
 #include <stdlib.h>
-
-namespace camerasp {
+namespace {
   const unsigned int maxSize = 100;
   std::atomic<int> pending_count;
   unsigned int curImg = 0;
@@ -29,37 +28,38 @@ namespace camerasp {
   static Imagebuffer imagebuffers[maxSize];
   //cuurrenCount is used on startup to avoid a request for an unfilled buffer
   static std::atomic<int> currentCount(0);
-  std::chrono::seconds samplingPeriod;
-  int quitFlag=0;
-  int max_file_count ;
-  std::chrono::time_point<high_resolution_timer::clock_type> prev;
-  std::string  pathname_prefix;
-//#ifdef __GNUC__
-//    "/home/pi/data/backup";
-//#else
-//   "C:\\Users\\Public\\Pictures\\Camerasp\\backUp";
-//#endif
-
-  //need a better way of handling file save
-  static void save_file(int file_number) {
-    buffer_t buffer;
-      {
-        std::lock_guard<std::mutex> lock(imagebuffers[file_number].m);
-        buffer = imagebuffers[file_number].buffer;
-      }
-      char intstr[8];
-      sprintf(intstr, "%04d", file_number);
-      save_image(buffer, pathname_prefix + intstr + ".jpg");
-      --pending_count;
+  int quitFlag = 0;
+  std::chrono::time_point<camerasp::high_resolution_timer::clock_type> prev;
+  void save_image(std::vector<unsigned char> const& buffer, std::string const& fName) {
+    FILE *fp = nullptr;
+    fopen_s(&fp, fName.c_str(), "wb");
+    if (fp) {
+      for (auto c : buffer) putc(c, fp);
+      fclose(fp);
+    }
   }
 
-  static std::vector<unsigned char> grabPicture(camerasp::cam_still& camera_)  {
+
+  //need a better way of handling file save
+   void save_file(int file_number) {
+    buffer_t buffer;
+    {
+      std::lock_guard<std::mutex> lock(imagebuffers[file_number].m);
+      buffer = imagebuffers[file_number].buffer;
+    }
+    char intstr[8];
+    sprintf(intstr, "%04d", file_number);
+    save_image(buffer, camerasp::pathname_prefix + intstr + ".jpg");
+    --pending_count;
+  }
+
+  std::vector<unsigned char> grabPicture(camerasp::cam_still& camera_) {
     //At any point in time only one instance of this function will be running
     camerasp::ImgInfo info;
     console->debug("Height = {0}, Width= {1}", camera_.getHeight(), camera_.getWidth());
     auto siz = camera_.getImageBufferSize();
     info.buffer.resize(siz);
-    camera_.takePicture((unsigned char*)(&info.buffer[0]),&siz);
+    camera_.takePicture((unsigned char*)(&info.buffer[0]), &siz);
     info.image_height = camera_.getHeight();
     info.image_width = camera_.getWidth();
     info.quality = 100;
@@ -73,6 +73,12 @@ namespace camerasp {
     }
     return buffer;
   }
+}
+namespace camerasp {
+  std::chrono::seconds samplingPeriod;
+  int max_file_count;
+  std::string  pathname_prefix;
+
   void handle_timeout(
     const asio::error_code&,
     high_resolution_timer& timer,
@@ -99,7 +105,7 @@ namespace camerasp {
         --pending_count;
       }
       if (currentCount < maxSize) ++currentCount;
-      curImg = (curImg+1) % maxSize;
+      curImg = (curImg + 1) % maxSize;
       //console->info("Prev Data Size {0}; time elapse {1}s..", buffer.size(), diff.count());
       timer.expires_at(prev + 2 * samplingPeriod);
       prev = current;
@@ -111,11 +117,10 @@ namespace camerasp {
   void setTimer(
     high_resolution_timer& timer,
     camerasp::cam_still& camera_) {
-     using namespace std::placeholders;
+    using namespace std::placeholders;
     try {
-      quitFlag = 0;
       prev = high_resolution_timer::clock_type::now();
-      timer.expires_at(prev +  samplingPeriod);
+      timer.expires_at(prev + samplingPeriod);
       timer.async_wait(std::bind(&handle_timeout, _1, std::ref(timer), std::ref(camera_)));
     }
     catch (std::exception& e) {
@@ -126,11 +131,15 @@ namespace camerasp {
 
     if (k > currentCount && currentCount < maxSize)
       k = currentCount - 1;
-    int next = (curImg -1 - k) % maxSize;
+    int next = (curImg - 1 - k) % maxSize;
     console->info("Image number = {0}", next);
     std::lock_guard<std::mutex> lock(imagebuffers[next].m);
     auto& imagebuffer = imagebuffers[next].buffer;
     return std::string(imagebuffer.begin(), imagebuffer.end());
+  }
+  void startCapture()
+  {
+    quitFlag = 0;
   }
   void stopCapture()
   {

@@ -9,32 +9,50 @@
 #include <jpeg/jpgrdwr.h>
 #include <camerasp/parseCmd.hpp>
 #include <camerasp/httpEventHandler.hpp>  
-
+#include <regex>
+#include <map>
 /// A string to send in responses.
 const std::string response_body
 (std::string("<html>\r\n") +
   std::string("<head><title>Accepted</title></head>\r\n") +
-  std::string("<body><h1>Does not support chunks</h1></body>\r\n") +
+  std::string("<body><h1>Not Implemented</h1></body>\r\n") +
   std::string("</html>\r\n"));
+
+
 struct UrlParser {
-  std::string command, query_key, query_value;
-  UrlParser(std::string const& uri) {
-    size_t pos = uri.find('/');
-    size_t start = (pos == std::string::npos) ? 0 : pos + 1;
-    pos = uri.find_first_of("?", start);
-    auto fin = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
-    command = std::string(uri.begin() + start, fin);
-    if (fin != uri.end()) {
-      pos = uri.find_first_of('&', ++pos);
-      std::string query(++fin, (pos == std::string::npos) ? uri.end() : uri.begin() + pos);
-      if (query.empty()) return;
-      pos = query.find_first_of('=', 0);
-      query_key = std::string(query.begin(), (pos == std::string::npos) ? query.end() : query.begin() + pos);
-      if (pos != std::string::npos) {
-        query_value = std::string(query.begin() + pos + 1, query.end());
+  std::string command;
+  std::map<std::string, std::string> queries;
+  UrlParser(std::string const& s) {
+    std::string uri = s;
+    //filter out anything after '#'
+    auto pos = uri.find('#');
+    if (pos != std::string::npos) {
+      uri = uri.erase(pos);
+    }
+    //detect command which may end with '?' if there are parameters
+    std::smatch m;
+    std::regex e("([^?]*)(\\??)");
+    if (std::regex_search(uri, m, e)) {
+      command = m[1];
+      //Command detected; now get parameter values "key=value&key=value"
+      uri = m.suffix().str();
+      std::regex e2("([^&]+)(&?)");
+      while (!uri.empty() && std::regex_search(uri, m, e2)) {
+        //for each matching key=value save key,value in map
+        std::regex e3("([^=]*)(=)");
+        std::string keyval = m[1];
+        std::smatch m3;
+        if (std::regex_search(keyval, m3, e3)) {
+          std::string key = m3[1];
+          std::string val = m3.suffix().str();
+          queries[key] = val;
+        }
+        uri = m.suffix().str();
       }
     }
-
+    else {
+      command = uri;
+    }
   }
 };
  bool isinteger(const std::string & s, int* k)
@@ -63,43 +81,49 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
 
     if (connection)
     {
-      UrlParser url(request.uri());
-      //std::cout << url.command << std::endl;
-      if (url.command == "img.jpg")
-      {
-        int k=0;
-        if (url.query_key == "prev") {
-          if (url.query_value.empty() ||  !isinteger(url.query_value, &k)) {
-            k = 0;
+      if (request.uri().empty()) {
+        auto resp = getGETResponse(0);
+        connection->send(std::move(resp.first), std::move(resp.second));
+
+      }   else {
+        UrlParser url(request.uri());
+        //std::cout << url.command << std::endl;
+        if (url.command == "getImage") {
+          int k = 0;
+          auto kv = url.queries.begin();
+          if (kv->first == "prev") {
+            if (kv->second.empty() || !isinteger(kv->second, &k)) {
+              k = 0;
+            }
+          }
+          auto resp = getGETResponse(k);
+          connection->send(std::move(resp.first), std::move(resp.second));
+        }  else if (url.command == "stopCapture"){
+          camerasp::stopCapture();
+        }  else if (url.command == "startCapture"){
+          camerasp::startCapture();
+        }  else {
+          std::ifstream t(configPath + "index.html");
+          if (t) {
+            std::string str(
+              (std::istreambuf_iterator<char>(t)),
+              std::istreambuf_iterator<char>());
+            via::http::tx_response response(via::http::response_status::code::OK);
+            response.add_server_header();
+            response.add_date_header();
+            response.add_header("Content-Type", "text/html");
+            response.add_header("charset", "utf-8");
+            response.add_content_length_header(str.size());
+            connection->send(response, str);
+            ////std::cout << str << std::endl;
+          } else {
+            via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
+            connection->send(response, "Index Not Found");
+            //std::cout << "index not found" << std::endl;
           }
         }
-        auto resp = getGETResponse(k);
-        connection->send(std::move(resp.first), std::move(resp.second));
       }
-      else {
-        std::ifstream t(configPath + "index.html");
-        if (t)
-        {
-          std::string str(
-            (std::istreambuf_iterator<char>(t)),
-            std::istreambuf_iterator<char>());
-          via::http::tx_response response(via::http::response_status::code::OK);
-          response.add_server_header();
-          response.add_date_header();
-          response.add_header("Content-Type", "text/html");
-          response.add_header("charset", "utf-8");
-          response.add_content_length_header(str.size());
-          connection->send(response, str);
-          ////std::cout << str << std::endl;
-        }
-        else {
-          via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-          connection->send(response, "Index Not Found");
-          //std::cout << "index not found" << std::endl;
-        }
-      }
-    }
-    else {
+    }  else {
       console->error("Failed to lock http_connection::weak_pointer");
     }
   }

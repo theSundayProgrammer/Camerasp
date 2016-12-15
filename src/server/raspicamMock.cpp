@@ -25,7 +25,11 @@ namespace camerasp
   unsigned int  cam_still::getImageBufferSize(void)const { console->debug("getImageBufferSize"); return 3 * this->height*this->width; }
   unsigned int  cam_still::getWidth(void)const { console->debug("getWidth"); return width; }
   unsigned int  cam_still::getHeight(void)const { console->debug("getHeight"); return height; }
-  int cam_still::takePicture(unsigned char *, unsigned int) { console->debug("retrieve"); return 0; }
+  int cam_still::takePicture(unsigned char *, unsigned int* length) { 
+    *length = width*height * 3 + 54;
+    console->debug("retrieve"); 
+    return 0; 
+  }
   bool cam_still::open(bool) { console->debug("open"); return true; }
 
   std::vector<unsigned char> write_JPEG_dat(struct camerasp::ImgInfo const &dat)  {

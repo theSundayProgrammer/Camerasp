@@ -1,112 +1,84 @@
-// Tokeniser.cpp : Defines the entry point for the console application.
-//
 
 #include "stdafx.h"
 #include <string>
-#include <algorithm>
-#include <map>
 #include <iostream>
-#include <atomic>
-std::map<std::string, std::string>
-tokenize(std::string const& query)
-{
-  using namespace std;
-  map<string, string> result;
-  size_t offset = 0;
-  size_t pos = query.find('=', offset);
-  while (pos != string::npos)
-  {
-    string name = query.substr(offset, pos - offset);
-    offset = pos + 1;
-    pos = query.find('&', offset);
-    if (pos != string::npos && pos > offset )
-    {
-      string val = query.substr(offset, pos - offset);
-      result.insert(make_pair(name, val));
-      offset = pos + 1;
-    }
-    else {
-      string val = query.substr(offset);
-      if (!val.empty())
-        result.insert(make_pair(name, val));
-      break;
-    }
-    pos = query.find('=', offset);
-  }
-  return result;
-}
-void test(std::string const& str)
-{
-  auto result = tokenize(str);
-  for (auto iter : result)
-  {
-    std::cout << iter.first << ":" << iter.second << std::endl;
-  }
-  std::cout << "\n\n";
-}
-struct UrlParser {
-  std::string command, query_key, query_value;
-  UrlParser(std::string const& uri) {
+#include <map>
+#include <regex>
+struct OldUrlParser {
+  std::string command;
+  std::map<std::string, std::string> queries;
+  OldUrlParser(std::string const& uri) {
     size_t pos = uri.find('/');
     size_t start = (pos == std::string::npos) ? 0 : pos + 1;
     pos = uri.find_first_of("?", start);
     auto fin = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
     command = std::string(uri.begin() + start, fin);
-    if (fin != uri.end()) {
+    while (fin != uri.end()) {
       pos = uri.find_first_of('&', ++pos);
-      std::string query(++fin, (pos == std::string::npos) ? uri.end() : uri.begin() + pos);
-      if (query.empty()) return;
-      pos = query.find_first_of('=', 0);
-      query_key = std::string(query.begin(), (pos == std::string::npos) ? query.end() : query.begin() + pos);
-      if (pos != std::string::npos) {
-        query_value = std::string(query.begin() + pos + 1, query.end());
-      }
-    }
+      auto next = (pos == std::string::npos) ? uri.end() : uri.begin() + pos;
+      std::string query(++fin, next);
+      fin = next;
 
+      if (query.empty()) return;
+      auto pos2 = query.find_first_of('=', 0);
+      std::string query_key = std::string(query.begin(), (pos2 == std::string::npos) ? query.end() : query.begin() + pos2);
+      std::string query_value;
+      if (pos2 != std::string::npos) {
+        query_value = std::string(query.begin() + pos2 + 1, query.end());
+
+      }
+      queries[query_key] = query_value;
+    }
   }
 };
-void testUrlParser(std::string const& url_)
+/*
+int main(int argc, char *argv[])
 {
-  UrlParser url(url_);
-  std::cout << url.command << "\n key: " << url.query_key << "\n value: " << url.query_value << std::endl;
-}
-void Test_itoa(int k) {
-  char buffer[8];
-  sprintf(buffer, "%04d", k);
-  std::cout << std::string(buffer) << std::endl;
-}
-
-int main() {
-  std::atomic<int> fileCount;
-  int maxval = 10;
-  int cmaxval = maxval;
-  for (int i = 0; i < 25; ++i) {
-    maxval = cmaxval;
-    printf("%d, %d\n", ++fileCount,maxval);
-    fileCount.compare_exchange_strong(maxval, 0);
+  UrlParser url("path?hue=br&width=320");
+  std::cout << url.command;  
+  for (auto& keyval : url.queries)  {
+    std::cout << keyval.first << "=" << keyval.second << std::endl;
   }
-}
+ 
+  return EXIT_SUCCESS;
+}*/
+struct UrlParser {
+  std::string command;
+  std::map<std::string, std::string> queries;
+  UrlParser(std::string const& s) {
+    std::string uri = s;
+    auto pos = uri.find('#');
+    if (pos != std::string::npos) {
+      uri = uri.erase(pos);
+    }
+    std::smatch m;
+    std::regex e("([^?]*)(\\??)");
+    if (std::regex_search(uri, m, e)) {
+      command = m[1];
+      uri = m.suffix().str();
+      std::regex e2("([^&]+)(&?)");
+      while (!uri.empty() && std::regex_search(uri, m, e2)) {
+        std::regex e3("([^=]*)(=)");
+        std::string keyval = m[1];
+        std::smatch m3;
+        if (std::regex_search(keyval, m3, e3)) {
+          std::string key = m3[1];
+          std::string val = m3.suffix().str();
+          queries[key] = val;
+        }
+        uri = m.suffix().str();
+      }
+    }    else {
+      command = uri;
+    }
+  }
+};
 
-int main2() {
-  for (int k = 0; k < 1000; k += 13)
-    Test_itoa(k);
-}
-int main1()
+int main()
 {
-  testUrlParser("/img?prev=1");
-  testUrlParser("/img?prev=");
-  testUrlParser("/img?prev");
-  testUrlParser("/img?");
-  testUrlParser("/img");
-  testUrlParser("/");
-
+  UrlParser uri("path?height=240&width=320#index");
+  std::cout << "command=" << uri.command << std::endl;
+  for (auto& kv : uri.queries)
+    std::cout << kv.first << "=" << kv.second << std::endl;
   return 0;
 }
-int main0()
-{
-  test("h=15&w=67&th=89");
-  test("h=15&w=67&th=");
-  test("h=15w=67&th=89");
-  return 0;
-}
-

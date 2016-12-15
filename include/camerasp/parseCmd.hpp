@@ -5,6 +5,7 @@
 // 
 // http://www.boost.org/LICENSE_1_0.txt)
 //////////////////////////////////////////////////////////////////////////////
+#pragma once
 #include <string>
 #include <vector>
 #ifdef RASPICAM_MOCK
@@ -22,7 +23,6 @@ errno_t fopen_s(FILE** fp, const char* name, const char* mode);
 #include <jpeg/jpgrdwr.h>
 #include <json/reader.h>
 #include <camerasp/commonUtils.hpp>
-
 #ifdef __GNUC__
 typedef int errno_t;
 errno_t fopen_s(FILE** fp, const char* name, const char* mode);
@@ -44,9 +44,7 @@ namespace camerasp{
   void setTimer(high_resolution_timer& timer,camerasp::cam_still&);
   std::string getImage(int k);
   void stopCapture();
-  void save_image(
-    std::vector<unsigned char> const& buffer, 
-    std::string const& fName);
+  void startCapture();
   Json::Value getDOM(std::string const& path);
   extern std::chrono::seconds samplingPeriod;
   extern int max_file_count;

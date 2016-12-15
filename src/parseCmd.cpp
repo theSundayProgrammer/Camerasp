@@ -185,14 +185,6 @@ RASPICAM_FORMAT getFormatFromString ( const std::string& str ) {
       }
       return err;
     }
-    void save_image(std::vector<unsigned char> const& buffer, std::string const& fName) {
-      FILE *fp = nullptr;
-      fopen_s(&fp, fName.c_str(), "wb");
-      if (fp) {
-        for (auto c : buffer) putc(c, fp);
-        fclose(fp);
-      }
-    }
     JSONCPP_STRING readInputTestFile(const char* path)
     {
       std::ifstream ifs(path);

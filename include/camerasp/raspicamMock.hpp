@@ -26,7 +26,7 @@ namespace camerasp
     void stopCapture();
     void commitParameters();
     bool  open(bool val = true);
-    int takePicture(unsigned char * preallocated_data, unsigned int length);
+    int takePicture(unsigned char * preallocated_data, unsigned int* length);
     unsigned int  getImageBufferSize(void)const;
     unsigned int  getWidth(void)const;
     unsigned int  getHeight(void)const;
