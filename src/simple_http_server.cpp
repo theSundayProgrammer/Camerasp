@@ -100,20 +100,20 @@ int main(int /* argc */, char* argv[]){
   using namespace std::placeholders;
   namespace spd = spdlog;
   std::string app_name(argv[0]);
-  Json::Value root = camerasp::getDOM(configPath + "options.json");
-  Json::Value log_config = root["Logging"];
-  Json::Value json_path = log_config["path"];
-  logpath = json_path.asString();
-  int size_mega_bytes = log_config["size"].asInt();
-  int count_files = log_config["count"].asInt();
-  console = spd::rotating_logger_mt("console", logpath, 1024*1024* size_mega_bytes, count_files);
+    Json::Value root = camerasp::getDOM(configPath + "options.json");
+    Json::Value log_config = root["Logging"];
+    Json::Value json_path = log_config["path"];
+    logpath = json_path.asString();
+    int size_mega_bytes = log_config["size"].asInt();
+    int count_files = log_config["count"].asInt();
+    console = spd::rotating_logger_mt("console", logpath, 1024 * 1024 * size_mega_bytes, count_files);
 
-  Json::Value backup = root["Data"];
-  camerasp::max_file_count = backup["count"].asInt();
-  int secs = backup["sample_period"].asInt();
+    Json::Value backup = root["Data"];
+    camerasp::max_file_count = backup["count"].asInt();
+    int secs = backup["sample_period"].asInt();
   camerasp::samplingPeriod = std::chrono::seconds(secs);
   camerasp::pathname_prefix = backup["path_prefix"].asString();
-  //console = spd::stdout_color_mt("console");
+ //console = spd::stdout_color_mt("console");
   console->set_level(spdlog::level::info);
   unsigned short port_number(8088);
   camerasp::cam_still camera;
@@ -137,7 +137,7 @@ int main(int /* argc */, char* argv[]){
       camerasp::setTimer(timer,camera);
       // Create the HTTP server, attach the request handler
       http_server_type http_server(io_service);
-      Handlers handler(camera);
+      Handlers handler(timer,camera);
       { // todo: refactor to an other function
         http_server.request_received_event(std::bind(&Handlers::request, handler, _1, _2, _3));
         http_server.chunk_received_event(std::bind(&Handlers::chunk, handler, _1, _2, _3));

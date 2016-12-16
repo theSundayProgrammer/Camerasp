@@ -4,7 +4,10 @@
 #include <camerasp/parseCmd.hpp>
 namespace camerasp
 {
-  cam_still::cam_still(void) { console->debug("RaspiCam"); }
+  cam_still::cam_still(void) {
+      changedSettings =false;
+      console->debug("RaspiCam"); 
+      }
   cam_still::~cam_still(void) { console->debug("~RaspiCam"); }
   void  cam_still::setFormat(enum RASPICAM_FORMAT) { console->debug("setFormat"); }
   void  cam_still::setWidth(unsigned int w) { console->debug("setWidth: " "{0}" , w); width = w; }
@@ -20,11 +23,29 @@ namespace camerasp
   void  cam_still::setShutterSpeed(unsigned int) { console->debug("setShutterSpeed"); }
   void  cam_still::setAWB(enum RASPICAM_AWB) { console->debug("setAWB"); }
   void  cam_still::setAWB_RB(float, float) { console->debug("setAWB_RB"); }
-  void  cam_still::stopCapture() { console->debug("stopCapture"); }
   void  cam_still::commitParameters() { console->debug("commitParameters"); }
-  unsigned int  cam_still::getImageBufferSize(void)const { console->debug("getImageBufferSize"); return 3 * this->height*this->width; }
+
+
+  void  cam_still::stopCapture() { 
+         console->debug("stopCapture"); 
+	 }
+  unsigned int  cam_still::getImageBufferSize(void)const { 
+            console->debug("getImageBufferSize");
+	    return 3 * this->height*this->width; 
+	    }
   unsigned int  cam_still::getWidth(void)const { console->debug("getWidth"); return width; }
   unsigned int  cam_still::getHeight(void)const { console->debug("getHeight"); return height; }
+
+  void cam_still::setHorizontalFlip(bool hFlip)  {
+    horizontalFlip = hFlip;
+    changedSettings = true;
+  }
+
+  void cam_still::setVerticalFlip(bool vFlip)  {
+    verticalFlip = vFlip;
+    changedSettings = true;
+  }
+
   int cam_still::takePicture(unsigned char *, unsigned int* length) { 
     *length = width*height * 3 + 54;
     console->debug("retrieve"); 
@@ -45,5 +66,4 @@ namespace camerasp
     return buffer;
 
   }
-
 }

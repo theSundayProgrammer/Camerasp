@@ -13,10 +13,12 @@ typedef http_server_type::http_connection_type http_connection;
 typedef http_server_type::chunk_type http_chunk_type;
 #include <string>
 #include <vector>
+#include <camerasp/parseCmd.hpp>
 extern const std::string configPath;
+
 class Handlers {
 public:
-  Handlers(camerasp::cam_still& Camera);
+  Handlers(camerasp::high_resolution_timer&, camerasp::cam_still&);
 
   void request(
     http_connection::weak_pointer weak_ptr,
@@ -64,8 +66,16 @@ public:
 
 private:
   
+  void send_standard_response(
+           http_connection::shared_pointer connection,
+           std::string const& str);
+  //handlers for sopecific commands
+  void start_capture();
+  void stop_capture();
+  void horizontal_flip();
+  void vertical_flip();
   std::pair<via::http::tx_response, std::string> getGETResponse(int k);
-  
+  camerasp::high_resolution_timer& timer_;
   camerasp::cam_still& camera_;
 };
 #endif

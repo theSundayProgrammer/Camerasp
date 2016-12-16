@@ -30,7 +30,14 @@ namespace camerasp
     unsigned int  getImageBufferSize(void)const;
     unsigned int  getWidth(void)const;
     unsigned int  getHeight(void)const;
+    void setHorizontalFlip(bool hFlip);
+
+    void setVerticalFlip(bool vFlip);
+
   private:
+    bool changedSettings;
+    bool verticalFlip;
+    bool horizontalFlip;
     unsigned int width;
     unsigned int height;
   };

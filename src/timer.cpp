@@ -137,12 +137,17 @@ namespace camerasp {
     auto& imagebuffer = imagebuffers[next].buffer;
     return std::string(imagebuffer.begin(), imagebuffer.end());
   }
-  void startCapture()
+  void startCapture(
+    high_resolution_timer& timer,
+    camerasp::cam_still& camera_)
   {
-    quitFlag = 0;
+    if (quitFlag) {
+      setTimer(timer, camera_);
+      quitFlag = 0;
+    }
   }
   void stopCapture()
   {
-    quitFlag = 1;
+    if (0==quitFlag)  quitFlag = 1;
   }
 }

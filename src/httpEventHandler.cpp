@@ -12,12 +12,24 @@
 #include <regex>
 #include <map>
 /// A string to send in responses.
-const std::string response_body
-(std::string("<html>\r\n") +
-  std::string("<head><title>Accepted</title></head>\r\n") +
-  std::string("<body><h1>Not Implemented</h1></body>\r\n") +
-  std::string("</html>\r\n"));
+const std::string response_missing_file =
+              "<html>\r\n"
+              "<head><title>Camerasp </title></head>\r\n"
+              "<body><h2>Requested file not found</h2></body>\r\n"
+              "</html>\r\n";
 
+const std::string response_command_success =
+              "<html>\r\n"
+              "<head><title>Camerasp Command Success</title></head>\r\n"
+              "<body><h2>Requested Command Succeeded</h2></body>\r\n"
+              "</html>\r\n";
+
+
+const std::string response_command_fail=
+              "<html>\r\n"
+              "<head><title>Camerasp Command Fail</title></head>\r\n"
+              "<body><h2>Not Implementedi or incorrect parameters</h2></body>\r\n"
+              "</html>\r\n";
 
 struct UrlParser {
   std::string command;
@@ -64,8 +76,20 @@ struct UrlParser {
 
   return (*p == 0);
 }
-Handlers::Handlers(camerasp::cam_still& Camera) : 
-  camera_(Camera)
+void Handlers::send_standard_response(
+           http_connection::shared_pointer connection,
+           std::string const& str){
+            via::http::tx_response response(via::http::response_status::code::OK);
+            response.add_server_header();
+            response.add_date_header();
+            response.add_header("Content-Type", "text/html");
+            response.add_header("charset", "utf-8");
+            response.add_content_length_header(response_missing_file.size());
+            connection->send(response,response_missing_file);
+	    }
+Handlers::Handlers(camerasp::high_resolution_timer& timer, camerasp::cam_still& camera) :
+  camera_(camera),
+  timer_(timer)
   {}
 
   void Handlers::request(
@@ -73,9 +97,6 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
       via::http::rx_request const& request,
       std::string const& body)
   {
-    //std::cout << "\n\nRx request: " << request.uri() << std::endl;
-
-    //std::cout << "Rx body: " << body << std::endl;
 
     http_connection::shared_pointer connection(weak_ptr.lock());
 
@@ -100,25 +121,36 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
           connection->send(std::move(resp.first), std::move(resp.second));
         }  else if (url.command == "stopCapture"){
           camerasp::stopCapture();
-        }  else if (url.command == "startCapture"){
-          camerasp::startCapture();
+          send_standard_response(connection,response_command_success);
+        }
+        else if (url.command == "startCapture") {
+          camerasp::startCapture(timer_,camera_);
+          send_standard_response(connection, response_command_success);
+        }
+        else if (url.command == "flip") {
+          auto kv = url.queries.begin();
+          bool set_val = kv->second == "true";
+          if (kv->first == "horizontal") {
+            camera_.setHorizontalFlip(set_val);
+            send_standard_response(connection, response_command_success);
+          }
+          else if (kv->first == "vertical") {
+            camera_.setVerticalFlip(set_val);
+            send_standard_response(connection, response_command_success);
+          }
+          else {
+            send_standard_response(connection, response_command_fail);
+          }
         }  else {
           std::ifstream t(configPath + "index.html");
           if (t) {
             std::string str(
               (std::istreambuf_iterator<char>(t)),
               std::istreambuf_iterator<char>());
-            via::http::tx_response response(via::http::response_status::code::OK);
-            response.add_server_header();
-            response.add_date_header();
-            response.add_header("Content-Type", "text/html");
-            response.add_header("charset", "utf-8");
-            response.add_content_length_header(str.size());
-            connection->send(response, str);
+            send_standard_response(connection,str);
             ////std::cout << str << std::endl;
           } else {
-            via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-            connection->send(response, "Index Not Found");
+            send_standard_response(connection,response_missing_file);
             //std::cout << "index not found" << std::endl;
           }
         }
@@ -131,20 +163,7 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
   {
     http_connection::shared_pointer connection(weak_ptr.lock());
     if (connection)
-    {
-      // Get the last request on this connection.
-      via::http::rx_request const& request(connection->request());
-
-      // Set the default response to 404 Not Found
-      via::http::tx_response response(via::http::response_status::code::NOT_FOUND);
-      // add the server and date headers
-      response.add_server_header();
-      response.add_date_header();
-      //response.set_status(via::http::response_status::code::OK);
-      connection->send(std::move(response),
-        via::comms::ConstBuffers(1, asio::buffer(response_body)));
-
-    }
+      send_standard_response(connection, response_command_fail);
     else
       console->error("Failed to lock http_connection::weak_pointer");
   }
@@ -244,3 +263,4 @@ Handlers::Handlers(camerasp::cam_still& Camera) :
       response.add_content_length_header(responsebody.size());
       return std::make_pair(response,responsebody );
   }
+  

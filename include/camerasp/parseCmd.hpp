@@ -44,7 +44,9 @@ namespace camerasp{
   void setTimer(high_resolution_timer& timer,camerasp::cam_still&);
   std::string getImage(int k);
   void stopCapture();
-  void startCapture();
+  void startCapture(
+    high_resolution_timer& timer,
+    camerasp::cam_still& camera_);
   Json::Value getDOM(std::string const& path);
   extern std::chrono::seconds samplingPeriod;
   extern int max_file_count;
